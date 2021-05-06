@@ -162,10 +162,8 @@ Make sure url takes the form http:/localhost:8080/... or localhost:8080/...```''
             # Set time left to current time
             time_left = time.time()
 
-            # Save details to a file
-            with open(fr"cache\{ctx.author.id}.cache", "w") as f:
-                print(access_token, refresh_token, time_left,
-                      scope, sep='\n', file=f)
+            # Save details to database
+            computations.save_user(ctx.author.id, access_token, refresh_token, time_left, scope)
 
             # Tell the user the authorisation process is complete
             await ctx.author.send("Successfully set up spotify account for use")
@@ -179,15 +177,11 @@ Make sure url takes the form http:/localhost:8080/... or localhost:8080/...```''
         """
         Removes any stored information about you
         """
-        # Cache file location
-        file = f"cache\\{ctx.author.id}.cache"
-
-        # If the file exists remove it
-        if os.path.exists(file):
-            os.remove(file)
-            await ctx.send("Removed all information")
+        if computations.check_user(ctx.author.id, ""):
+            await ctx.send("Already removed")
         else:
-            await ctx.send("All information already removed")
+            computations.delete_user(ctx.author.id)
+            await ctx.send("Cleared Information")
 
 
 class SpotifyAPI(commands.Cog):

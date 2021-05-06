@@ -11,6 +11,9 @@ from urllib import parse
 from typing import Callable
 from functools import wraps
 
+# Custom scripts
+import computations
+
 # Constant for time taken to timeout
 TIMEOUT_TIME = 3600
 
@@ -179,6 +182,7 @@ class OAuth:
 
         # Show the user the Authorisation page to authorise application
         auth_url = self.grab_code()
+        return "ERROR SCOPE"
         print("After redirect paste url here:")
 
         # If the user turned auto open off print the link
@@ -729,7 +733,7 @@ def encode_client(client_inst: OAuth) -> str:
 @type_check
 def init(redirect_uri: str, client_id: str = None,
          client_secret: str = None, scope: str = None,
-         user: str = None, file_loc: str = None) -> str:
+         user: str = None) -> str:
     """
     :arg redirect_uri: The uri to redirect the user to when
                        making the request (Required)
@@ -740,52 +744,15 @@ def init(redirect_uri: str, client_id: str = None,
                     variables (Optional)
     :arg scope: The scope for the request (Optional)
     :arg user: For handling multiple users (Optional)
-    :arg file_loc: The location to hold the token file (Optional)
     :return str: The token needed to make requests
     Initialises the program so that requests can be made
     and gives the access token
     """
-    # Variable to track if the location is absolute
-    absolute = False
-    # Checks if the location is specified
-    if file_loc is not None:
-        # If the path specified is an absolute path, use it
-        # else get the current directory and add on the path
-        if not file_loc.startswith(os.getcwd()):
-            file_location = f"{os.getcwd()}{file_loc}"
-        else:
-            absolute = True
-            file_location = f"{file_loc}"
-    else:
-        file_location = f"{os.getcwd()}"
-
-    # Create file name string
-    file_name = f"\\{user if user is not None else ''}.cache"
-
-    # Get all files in file location
-    folders = os.listdir(file_location)
-    if "cache" in folders:
-        file_location += r"\cache"
-        files = os.listdir(file_location)
-    else:
-        # If the path was absolute get the files in that directory
-        # else create and empty files list
-        if absolute:
-            files = os.listdir(file_location)
-        else:
-            file_location += r"\cache"
-            files = []
-
-    # Inititalise new user to True
-    new_user = True
-
-    # If the file exists in the expected location go ahead
-    if file_name[1:] in files:
-        # Grab tokens from past run
-        with open(f"{file_location}{file_name}") as f:
-            contents = [line.rstrip() for line in f.readlines()]
-            access_token, refresh_token, time_left, verified_scope = contents
+    if not computations.check_user(user, ""):
+        access_token, refresh_token, time_left, verified_scope = computations.get_user(user)
         new_user = False
+    else:
+        new_user = True
 
     # If the user didn't enter their id or secret
     # attempt to get it from the environment variables
@@ -854,13 +821,7 @@ def init(redirect_uri: str, client_id: str = None,
         # so all available functions can be used
         scope = verified_scope
 
-    # Create directory if not already existant
-    os.makedirs(f"{file_location}", exist_ok=True)
-
-    # On exit, save all details
-    with open(f"{file_location}{file_name}", "w") as f:
-        print(access_token, refresh_token, time_left,
-              scope, sep='\n', file=f)
+    computations.update_user(user, access_token, refresh_token, time_left, scope)
 
     # Return the auth token
     return access_token

@@ -1,9 +1,11 @@
 # Import standard libraries
 import os
+import psycopg2
 
 # Import custom script
 import spotifyauth
 
+URL = "postgres://vqknvpawvibctc:3416e185bcfa3ba0423ac101e908d815f01a1837322c4950ad31a1ca897e2cb2@ec2-54-228-139-34.eu-west-1.compute.amazonaws.com:5432/d2if6njdaf83bu"
 
 def check_user(user: str, scope: str) -> bool:
     """
@@ -12,26 +14,60 @@ def check_user(user: str, scope: str) -> bool:
     :return bool: Whether the user is new or not
     Returns whether the user is new or not/needs an updated scope
     """
-    # Set new_user to True initially
-    new_user = True
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+    cur.execute(f"""SELECT scope FROM AuthData
+WHERE personid = '{user}';""")
+    auth_scope = cur.fetchone()
+    cur.close()
+    con.close()
+    if auth_scope is None:
+        return True
+    auth_scope = auth_scope[0].split()
+    if not set(scope.split()).issubset(set(auth_scope)):
+        return True
+    return False
 
-    # Check if the user has a .cache file and whether it has the
-    # correct scope, if both conditions met, set new_user to false
-    for file in os.listdir("cache"):
-        if file == f"{user}.cache":
-            if scope != "":
-                with open(fr"cache/{user}.cache") as f:
-                    auth_scope = f.readlines()[3].rstrip().split()
-                    req_scope = scope.split()
-                    if set(req_scope).issubset(set(auth_scope)):
-                        new_user = False
-            else:
-                new_user = False
+def save_user(user: str, token: str, refresh: str, time: float, scope: str):
+    """
+    Saves details about a user
+    """
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+    cur.execute(f"""INSERT INTO AuthData
+VALUES ('{user}', '{token}', '{refresh}', {time}, '{scope}');""")
+    cur.close()
+    con.commit()
+    con.close()
 
-    # Return whether the user is new or not
-    return new_user
+def delete_user(user: str):
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+    cur.execute(f"DELETE FROM AuthData WHERE personid = '{user}';")
+    cur.close()
+    con.commit()
+    con.close()
 
+def get_user(user: str):
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+    cur.execute(f"""SELECT * FROM AuthData
+WHERE personid = '{user}';""")
+    result = cur.fetchone()
+    cur.close()
+    con.close()
+    return result[1:]
 
+def update_user(user: str, token: str, refresh: str, time: float, scope: str):
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+    cur.execute(f"""UPDATE AuthData
+SET authtoken = '{token}', refreshtoken = '{refresh}', time={time}, scope = '{scope}'
+WHERE personid = '{user}';""")
+    cur.close()
+    con.commit()
+    con.close()
+    
 async def show_overlap(*users: list[str]) -> dict:
     """
     :arg users: The id of users to compare
