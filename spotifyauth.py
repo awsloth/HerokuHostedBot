@@ -136,7 +136,7 @@ def get_recommendations(user: str, songs: int, source: list) -> dict:
     Return recommendations for the user
     """
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
@@ -240,7 +240,7 @@ def top_ten(user: str, time_range: str) -> list:
 
 async def genres(user: str, artists: list) -> list:
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
