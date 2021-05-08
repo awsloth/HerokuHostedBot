@@ -146,7 +146,7 @@ class AccountCommands(commands.Cog):
         """
         Removes any stored information about you
         """
-        if not computations.check_user_exist(ctx.author.id):
+        if computations.check_user_exist(ctx.author.id):
             computations.delete_user(ctx.author.id)
         await ctx.send("Cleared Information")
 
