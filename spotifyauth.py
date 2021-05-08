@@ -2,6 +2,7 @@
 import os
 import asyncio
 import concurrent.futures
+import collections
 
 # Import custom script
 import spotifyapi
@@ -277,3 +278,52 @@ async def genres(user: str, artists: list) -> list:
         genre_list += artist['genres']
 
     return list(set(genre_list))
+
+
+async def get_artists(user: str, playlist: str) -> dict:
+    if not computations.check_user_exist(user):
+        return {"info": [],
+                "Error": f'''```User doesn't exist
+    authenticate using the `+setup` command please```'''}
+
+    # Get the auth code
+    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
+
+    # Initiate the APIReq class to interact with the api
+    sp = spotifyapi.APIReq(code)
+
+    playlist_id = playlist.replace("spotify:playlist:", '')
+
+    # Get the total number of playlists the user has
+    total = sp.get_tracks_playlist(playlist_id, 1)['total']
+
+    # Define tracks list
+    tracks = []
+
+    # Get the loop for asyncio
+    loop = asyncio.get_event_loop()
+
+    # Create a threading executor
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for i in range(total // 100 + (total % 100 > 0)):
+            futures.append(loop.run_in_executor(executor,
+                                                sp.get_tracks_playlist, playlist_id, 100, i * 100))
+
+        # Add the songs to the tracks list
+        for future in futures:
+            songs = await future
+            tracks += songs['items']
+
+    artists = []
+    for track in tracks:
+        artists += [artist['name'] for artist in track['track']['artists']]
+
+    artists = collections.Counter(artists)
+
+    percentages = [format(artists[key]/len(artists)*100, '.3') for key in artists.keys()]
+
+    return {"info": sorted(list(zip(artists.keys(), percentages)), key=lambda x: 100-float(x[1]))[:10], "Error": 0}
+

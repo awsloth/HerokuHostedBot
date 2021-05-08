@@ -242,7 +242,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "queue":
             # add tracks to queue
             result = spotifyauth.add_to_queue(str(ctx.author.id),
-                                                    recs['info']['tracks'])
+                                              recs['info']['tracks'])
             if result['Error'] != 0:
                 await ctx.send(result['Error'])
                 return -1
@@ -251,8 +251,8 @@ class SpotifyAPI(commands.Cog):
 
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
-            result = await spotifyauth.create_playlist(str(ctx.author.id),
-                                                       recs['info']['tracks'])
+            result = spotifyauth.create_playlist(str(ctx.author.id),
+                                                 recs['info']['tracks'])
             if result['Error'] != 0:
                 await ctx.send(result['Error'])
                 return -1
@@ -265,9 +265,17 @@ class SpotifyAPI(commands.Cog):
         Displays artists in playlist
         :arg playlist: A playlist link, id or uri
         """
-        # artist = await spotifyauth.get_track(playlist)
-        # await ctx.send(artists)
-        await ctx.send("In the works pls be patient")
+        artists = await spotifyauth.get_artists(str(ctx.author.id), computations.link_to_uri(playlist))
+
+        if artists['Error'] != 0:
+            await ctx.send(artists['Error'])
+            return -1
+
+        # Form inline code message to show song names and artists
+        messages = computations.form_message([f"{artist} with {percentage}%" for artist, percentage in artists['info']])
+
+        for message in messages:
+            await ctx.send(message)
 
     @commands.command(name='top10')
     async def top10(self, ctx, time_range: str):
