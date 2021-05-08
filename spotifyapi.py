@@ -1,18 +1,17 @@
 # Import base libraries
-import requests
 import webbrowser
 import time
 import os
 import json
+
+# Import pip library
+import requests
 
 # Import from libraries
 from base64 import b64encode
 from urllib import parse
 from typing import Callable
 from functools import wraps
-
-# Custom scripts
-import computations
 
 # Constant for time taken to timeout
 TIMEOUT_TIME = 3600
@@ -25,6 +24,7 @@ def type_check(func: Callable) -> Callable:
     :return Callable: The function combined with the decorator
     Adds the decorator to the function decorated with it
     """
+    # noinspection PyUnresolvedReferences
     @wraps(func)
     def wrapper(*args: list, **kwargs: dict):
         """
@@ -175,14 +175,13 @@ class OAuth:
     def first_run(self, auto_open: bool = True) -> dict:
         """
         :arg auto_open: determines whether the function prints the link
-                        or opens it using the webbrowser module (Optional)
+                        or opens it using the web browser module (Optional)
         :return dict: The tokens received from running through the OAuth
         Performs the steps to authorise a session and returns the tokens
         """
 
         # Show the user the Authorisation page to authorise application
         auth_url = self.grab_code()
-        return "ERROR SCOPE"
         print("After redirect paste url here:")
 
         # If the user turned auto open off print the link
@@ -200,7 +199,8 @@ class OAuth:
         return tokens
 
 
-class APIreq:
+# API request class to make requests to the spotify api
+class APIReq:
     """
     A class to make requests to the Spotify API
     """
@@ -209,7 +209,7 @@ class APIreq:
         """
         :arg auth_token: The authorization token from spotify
         :return None:
-        Sets up the APIreq class to make requests to the Spotify API
+        Sets up the API request class to make requests to the Spotify API
         """
         # Create the variable base to store the base of the url for spotify api
         self.base = "https://api.spotify.com/v1/"
@@ -348,12 +348,12 @@ class APIreq:
         # check whether they were entered
         arg_names = ("name", "public", "collaborative", "description")
         args = (name, public, collaborative, description)
-        arg_vals = (name, "true" if public else "false",
-                    "true" if collaborative else "false", description)
+        arg_values = (name, "true" if public else "false",
+                      "true" if collaborative else "false", description)
 
         for i in range(len(args)):
             if args[i] is not None:
-                body.update({arg_names[i]: arg_vals[i]})
+                body.update({arg_names[i]: arg_values[i]})
 
         body = json.dumps(body)
 
@@ -391,13 +391,13 @@ class APIreq:
         # check whether they were entered
         arg_names = ("name", "public", "collaborative", "description")
         args = (name, public, collaborative, description)
-        arg_vals = (name, "true" if public else "false",
-                    "true" if collaborative else "false", description)
+        arg_values = (name, "true" if public else "false",
+                      "true" if collaborative else "false", description)
 
         # Loop through arguments and add to body if entered
         for i in range(len(args)):
             if args[i] is not None:
-                params.update({arg_names[i]: arg_vals[i]})
+                params.update({arg_names[i]: arg_values[i]})
 
         body = json.dumps(params)
 
@@ -549,7 +549,7 @@ class APIreq:
         return r
 
     @type_check
-    def genres_rcommnd(self) -> dict:
+    def genres_recommend(self) -> dict:
         """
         :return dict: The dict containing the available genres
         Gets the available genre seeds from the api
@@ -573,7 +573,7 @@ class APIreq:
         url = f"{self.base}tracks"
 
         if len(id_list) > 50:
-            return "Error, too many ids"
+            return {"Error": "Error, too many ids"}
 
         # Set parameters holding the ids
         params = {"ids": ",".join(id_list)}
@@ -730,29 +730,107 @@ def encode_client(client_inst: OAuth) -> str:
     return encoded_client
 
 
+# Function to save user data
+def save_data(user: str, auth_token: str, refresh_token: str,
+              time_left: float, scope: str):
+    """
+    :arg user: The user to save the data for
+    :arg auth_token: The auth token for the user
+    :arg refresh_token: The refresh token for the user
+    :arg time_left: The time left that the auth token is valid for
+    :arg scope: The scope the user is authenticated for
+    Saves the given data in a file for later use
+    """
+    # Create file name string
+    file_name = fr"\{user}.cache"
+
+    # Define file_location
+    file_location = fr"{os.getcwd()}\cache"
+
+    # Create directory if not already existent
+    os.makedirs(fr"{file_location}", exist_ok=True)
+
+    # Save details
+    with open(fr"{file_location}{file_name}", "w") as f:
+        print(auth_token, refresh_token, time_left,
+              scope, sep='\n', file=f)
+
+
+# Function to read user data
+def read_data(user: str) -> list:
+    """
+    :arg user: The user whose data is going to be read
+    :return list: A list containing the data about the user
+    Reads the data from the user's file
+    """
+    # Define file_location
+    file_location = fr"{os.getcwd()}\cache"
+    with open(fr"{file_location}\{user}.cache") as f:
+        contents = [line.rstrip() for line in f.readlines()]
+
+    return contents
+
+
+# Function to check user's data exists
+def check_user(user: str) -> bool:
+    """
+    :arg user: The user to check the data for
+    :return bool: Whether the user has data stored about them
+    A function that checks through the stored files to check
+    if the user has a file
+    """
+    # Define file_location
+    file_location = fr"{os.getcwd()}\cache"
+
+    # Create file name string
+    file_name = fr"{user}.cache"
+
+    # If file name in the files at the location
+    return file_name in os.listdir(file_location)
+
+
 @type_check
-def init(redirect_uri: str, client_id: str = None,
-         client_secret: str = None, scope: str = None,
-         user: str = None) -> str:
+def init(redirect_uri: str, user: str,
+         client_id: str = None, client_secret: str = None,
+         scope: str = None, save_func: Callable = save_data,
+         read_func: Callable = read_data, update_func: Callable = save_data,
+         check_func: Callable = check_user) -> str:
     """
     :arg redirect_uri: The uri to redirect the user to when
                        making the request (Required)
+    :arg user: For handling multiple users (Required)
     :arg client_id: The client_id of your application, if not given will
                     search for SPOTIFY_ID in environment variables (Optional)
     :arg secret_id: The client_secret of your application, if not given will
                     search for SPOTIFY_SECRET in environment
                     variables (Optional)
     :arg scope: The scope for the request (Optional)
-    :arg user: For handling multiple users (Optional)
+    :arg file_loc: The location to hold the token file (Optional)
+    :arg save_func: A function to save user data, must take user,
+                    authentication token, refresh token, time and
+                    scope as inputs (Optional)
+    :arg read_func: A function to read user data, must take user as
+                    argument and return stored data about them (Optional)
+    :arg update_func: A function to update user data, must take user,
+                      authentication token, refresh token, time and
+                      scope as inputs (Optional)
+    :arg check_func: A function to check whether a user's data is
+                     stored already or not takes user as the
+                     argument True if stored else False (Optional)
     :return str: The token needed to make requests
     Initialises the program so that requests can be made
     and gives the access token
     """
-    if not computations.check_user(user, ""):
-        access_token, refresh_token, time_left, verified_scope = computations.get_user(user)
-        new_user = False
+    # If the user is stored already grab the existing data
+    # else set new_user to false
+    if check_func(user):
+        access_token, refresh_token, time_left, verified_scope = read_func(user)
     else:
-        new_user = True
+        # Define variables for editor
+        access_token = None
+        refresh_token = None
+        time_left = None
+        verified_scope = ""
 
     # If the user didn't enter their id or secret
     # attempt to get it from the environment variables
@@ -772,7 +850,10 @@ def init(redirect_uri: str, client_id: str = None,
     client = OAuth(client_id, client_secret, redirect_uri, scope)
 
     # If scope unsuitable, run out of time or new user re-request tokens
-    if new_user:
+    if (
+            (not check_func(user)) or
+            (not scope_st.issubset(set(verified_scope.split())) and scope != "")
+    ):
         # Grab the json from the api
         response = client.first_run()
 
@@ -784,7 +865,7 @@ def init(redirect_uri: str, client_id: str = None,
         if 'scope' in response:
             scope = response['scope']
 
-        # Set the time to a new time as token just recieved
+        # Set the time to a new time as token just received
         time_left = time.time()
 
     elif not time.time() - TIMEOUT_TIME < float(time_left):
@@ -798,22 +879,7 @@ def init(redirect_uri: str, client_id: str = None,
         if 'scope' in response:
             scope = response['scope']
 
-        # Set the time to a new time as token just recieved
-        time_left = time.time()
-
-    elif not scope_st.issubset(set(verified_scope.split())) and scope != "":
-        # Grab the json from the api
-        response = client.first_run()
-
-        # Grab the tokens and scope from the api
-        access_token = response['access_token']
-        refresh_token = response['refresh_token']
-
-        # If there was an entered scope get it
-        if 'scope' in response:
-            scope = response['scope']
-
-        # Set the time to a new time as token just recieved
+        # Set the time to a new time as token just received
         time_left = time.time()
 
     else:
@@ -821,7 +887,10 @@ def init(redirect_uri: str, client_id: str = None,
         # so all available functions can be used
         scope = verified_scope
 
-    computations.update_user(user, access_token, refresh_token, time_left, scope)
+    if check_user(user):
+        update_func(user, access_token, refresh_token, time_left, scope)
+    else:
+        save_func(user, access_token, refresh_token, time_left, scope)
 
     # Return the auth token
     return access_token

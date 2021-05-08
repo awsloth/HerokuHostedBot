@@ -1,11 +1,22 @@
 # Import standard libraries
-import os
 import psycopg2
 
 # Import custom script
 import spotifyauth
 
 URL = "postgres://vqknvpawvibctc:3416e185bcfa3ba0423ac101e908d815f01a1837322c4950ad31a1ca897e2cb2@ec2-54-228-139-34.eu-west-1.compute.amazonaws.com:5432/d2if6njdaf83bu"
+
+
+def check_user_exist(user: str) -> bool:
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+    cur.execute(f"""SELECT personid FROM AuthData
+    WHERE personid = '{user}';""")
+    person = cur.fetchone()
+    cur.close()
+    con.close()
+    return person is not None
+
 
 def check_user(user: str, scope: str) -> bool:
     """
@@ -28,6 +39,7 @@ WHERE personid = '{user}';""")
         return True
     return False
 
+
 def save_user(user: str, token: str, refresh: str, time: float, scope: str):
     """
     Saves details about a user
@@ -40,6 +52,7 @@ VALUES ('{user}', '{token}', '{refresh}', {time}, '{scope}');""")
     con.commit()
     con.close()
 
+
 def delete_user(user: str):
     con = psycopg2.connect(URL)
     cur = con.cursor()
@@ -47,6 +60,7 @@ def delete_user(user: str):
     cur.close()
     con.commit()
     con.close()
+
 
 def get_user(user: str):
     con = psycopg2.connect(URL)
@@ -58,6 +72,7 @@ WHERE personid = '{user}';""")
     con.close()
     return result[1:]
 
+
 def update_user(user: str, token: str, refresh: str, time: float, scope: str):
     con = psycopg2.connect(URL)
     cur = con.cursor()
@@ -68,6 +83,7 @@ WHERE personid = '{user}';""")
     con.commit()
     con.close()
     
+
 async def show_overlap(*users: list[str]) -> dict:
     """
     :arg users: The id of users to compare
@@ -94,7 +110,7 @@ async def show_overlap(*users: list[str]) -> dict:
     total_songs = sum(map(len, [song_set for song_set in user_songs]))
 
     # Find the percentage overlap
-    overlap_perc = format((len(songs) / total_songs) * 100, '.3')
+    overlap_percentage = format((len(songs) / total_songs) * 100, '.3')
 
     # Find song names with id dict
     id_dict = {}
@@ -107,7 +123,7 @@ async def show_overlap(*users: list[str]) -> dict:
 
     # Return the information
     return {"info": {"songs": song_details, "total": len(songs),
-                     "percentage": overlap_perc}, "Error": 0}
+                     "percentage": overlap_percentage}, "Error": 0}
 
 
 def link_to_uri(link: str) -> str:
@@ -118,6 +134,7 @@ def link_to_uri(link: str) -> str:
     link = link.replace("/", ":")
 
     return link
+
 
 def form_message(items: list) -> list:
     """
@@ -136,4 +153,3 @@ def form_message(items: list) -> list:
         messages.append(message)
 
     return messages
-

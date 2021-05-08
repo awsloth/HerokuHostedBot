@@ -1,7 +1,6 @@
 # Import standard libraries
 import os
 import asyncio
-import sys
 import time
 import typing
 
@@ -12,7 +11,6 @@ import discord
 from discord.ext import commands
 
 # Import custom scripts
-import spotifyapi
 import spotifyauth
 import computations
 
@@ -26,7 +24,7 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='+', intents=intents)
 
 # Create the message to send to the user
-message = '''```I'm going to send you a link
+auth_message = '''```I'm going to send you a link
 Open the link and sign into your Spotify account
 Then accept the bot access
 After redirect to the localhost site copy the new url and paste here```'''
@@ -40,18 +38,19 @@ async def auth_scope(ctx, command, req_scope):
     await msg.add_reaction("\N{THUMBS UP SIGN}")
     await msg.add_reaction("\N{THUMBS DOWN SIGN}")
 
-    def check(reaction, user):
+    def check(s_reaction, s_user):
         return (
-                (ctx.message.author == user) and
-                (msg == reaction.message) and
-                (str(reaction.emoji) in ["👍", "👎"])
+                (ctx.message.author == s_user) and
+                (msg == s_reaction.message) and
+                (str(s_reaction.emoji) in ["👍", "👎"])
                 )
 
     try:
         reaction, user = await bot.wait_for('reaction_add',
                                             timeout=120.0, check=check)
     except asyncio.TimeoutError:
-        await ctx.send(f"Timed out {i}")
+        await ctx.send(f"Timed out")
+        return False
 
     if str(reaction) == "👍":
         await ctx.send("Scope accepted")
@@ -84,9 +83,9 @@ class AccountCommands(commands.Cog):
         """
 
         ########################################################
-        ##                                                    ##
-        ##            Clean this function up                  ##
-        ##                                                    ##
+        #                                                    ##
+        #            Clean this function up                  ##
+        #                                                    ##
         ########################################################
 
         scope_translate = {'all': ['user-top-read', 'playlist-read-private',
@@ -117,7 +116,7 @@ class AccountCommands(commands.Cog):
         # else show they have already set up
         if computations.check_user(ctx.author.id, scope):
             # Send the user the message to explain what to do
-            await ctx.author.send(message)
+            await ctx.author.send(auth_message)
 
             # Get the url and instance of oauth
             # to authorise the user
@@ -143,7 +142,7 @@ class AccountCommands(commands.Cog):
             # Print the response (For debug purposes)
             print(response)
 
-            # If there is no access token, then error has occured
+            # If there is no access token, then error has occurred
             # and show the error
             if 'access_token' not in response:
                 await ctx.author.send(''' ```Error with url, try again
@@ -200,18 +199,18 @@ class SpotifyAPI(commands.Cog):
         user_ids = list(map(lambda x: x.id if not isinstance(x, str) else x, users))
         info = await computations.show_overlap(*user_ids)
 
-        # If an error occured, send the error to the user
+        # If an error occurred, send the error to the user
         if not info['Error'] == 0:
             await ctx.send(info['Error'])
             return -1
 
         # Get the overlap, overlap percentage and songs
-        overlap_perc = info['info']['percentage']
+        overlap_percentage = info['info']['percentage']
         overlap = info['info']['total']
         song_details = info['info']['songs']
 
         # Show the user the overlap and songs
-        await ctx.send(f"You have a {overlap_perc}% overlap, or {overlap} songs")
+        await ctx.send(f"You have a {overlap_percentage}% overlap, or {overlap} songs")
 
         # Form inline code message to show song names and artists
         messages = computations.form_message([f"{name} by {artist}" for name, artist in song_details])
@@ -220,15 +219,15 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(message)
 
     @commands.command(name='sleep')
-    async def sleep_timer(self, ctx, time, fade_time: typing.Union[int, None]):
+    async def sleep_timer(self, ctx, sleep_time, fade_time: typing.Union[int, None]):
         """
         Stops music playing after given time,
         but waits until the end of the track
         :arg time: Time to wait before sleeping (HH:MM:SS)
         :arg fade_time: The fade time set in spotify settings between songs
         """
-        # Split up the time into hours, mins and secs
-        hours, minutes, seconds = map(int, time.split(":"))
+        # Split up the time into hours, minutes and secs
+        hours, minutes, seconds = map(int, sleep_time.split(":"))
 
         # Calculate the total time in seconds
         total_time_secs = hours*3600+minutes*60+seconds
@@ -257,7 +256,7 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(recs)
             return -1
 
-        track_info = [[tracks['name'], tracks['artists'][0]['name']] for track in recs['tracks']]
+        track_info = [[tracks['name'], tracks['artists'][0]['name']] for tracks in recs['tracks']]
 
         if output.lower() == "dm":
             # Form inline code message to show song names and artists
@@ -269,12 +268,12 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "queue":
             # add tracks to queue
             await ctx.send(spotifyauth.add_to_queue(str(ctx.author.id),
-                                                    tracks))
+                                                    recs['tracks']))
 
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
             await ctx.send(spotifyauth.create_playlist(str(ctx.author.id),
-                                                       tracks))
+                                                       recs['tracks']))
 
     @commands.command(name='artists')
     async def artists(self, ctx, playlist: str):
@@ -282,8 +281,8 @@ class SpotifyAPI(commands.Cog):
         Displays artists in playlist
         :arg playlist: A playlist link, id or uri
         """
-        #artist = await spotifyauth.get_track(playlist)
-        #await ctx.send(artists)
+        # artist = await spotifyauth.get_track(playlist)
+        # await ctx.send(artists)
         await ctx.send("In the works pls be patient")
 
     @commands.command(name='top10')
@@ -299,7 +298,7 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(f"{time_range} not available, user 'long', 'medium' or 'short'")
             return -1
         
-        songs = spotifyauth.topten(str(ctx.author.id), time_range)
+        songs = spotifyauth.top_ten(str(ctx.author.id), time_range)
 
         song_details = [[i, track['name'], track['artists'][0]['name']] for i, track in enumerate(songs)]
 
@@ -309,13 +308,13 @@ class SpotifyAPI(commands.Cog):
         for message in messages:
             await ctx.send(message)
 
-    @commands.command(name='genrecent')
+    @commands.command(name='recent_genre')
     async def recent(self, ctx):
         """
         Shows the recent genres you have been listening to
         """
         
-        songs = spotifyauth.topten(str(ctx.author.id), "short")
+        songs = spotifyauth.top_ten(str(ctx.author.id), "short")
 
         artists = []
         for song in songs:
@@ -329,7 +328,6 @@ class SpotifyAPI(commands.Cog):
             
         for message in messages:
             await ctx.send(message)
-
 
 
 # Add cogs to bot
