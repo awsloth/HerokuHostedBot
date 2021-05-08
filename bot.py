@@ -81,13 +81,6 @@ class AccountCommands(commands.Cog):
             The name of a command will tell you the scopes for that command and
                 ask if you want to verify for it
         """
-
-        ########################################################
-        #                                                    ##
-        #            Clean this function up                  ##
-        #                                                    ##
-        ########################################################
-
         scope_translate = {'all': ['user-top-read', 'playlist-read-private',
                                    'playlist-modify-public',
                                    'user-modify-playback-state',
@@ -102,7 +95,7 @@ class AccountCommands(commands.Cog):
                                      'user-read-playback-state'],
                            'recs': ['user-modify-playback-state',
                                     'playlist-modify-public']}
-        command_names = ['compare', 'sleep']
+        command_names = ['compare', 'sleep', 'recs']
         scope = []
         for scope_type in scopes:
             required_scope = scope_translate[scope_type]
@@ -118,35 +111,12 @@ class AccountCommands(commands.Cog):
             # Send the user the message to explain what to do
             await ctx.author.send(auth_message)
 
-            # Get the url and instance of oauth
-            # to authorise the user
-            url, oauth = spotifyauth.get_url(scope)
-
-            # Show the user the url
-            await ctx.author.send(url)
-
-            # Define function to check the message is
-            # by the needed user
-            def check(m):
-                return m.author == ctx.author
-
-            # Wait for the user to send a message
-            response = await bot.wait_for('message', check=check)
-
-            # Get the auth_code from the url
-            auth_code = response.content.split("?code=")[1]
-
-            # Get the response from the spotify api
-            response = oauth.grab_token(auth_code)
-
-            # Print the response (For debug purposes)
-            print(response)
+            response = await spotifyauth.setup_user(ctx, bot, scope)
 
             # If there is no access token, then error has occurred
             # and show the error
             if 'access_token' not in response:
-                await ctx.author.send(''' ```Error with url, try again
-Make sure url takes the form http:/localhost:8080/... or localhost:8080/...```''')
+                await ctx.send("`An error has occurred")
                 return -1
 
             # Get the access and refresh token from the response
@@ -176,11 +146,9 @@ Make sure url takes the form http:/localhost:8080/... or localhost:8080/...```''
         """
         Removes any stored information about you
         """
-        if computations.check_user(ctx.author.id, ""):
-            await ctx.send("Already removed")
-        else:
+        if not computations.check_user_exist(ctx.author.id):
             computations.delete_user(ctx.author.id)
-            await ctx.send("Cleared Information")
+        await ctx.send("Cleared Information")
 
 
 class SpotifyAPI(commands.Cog):
@@ -235,7 +203,13 @@ class SpotifyAPI(commands.Cog):
         await ctx.send("Waiting to sleep")
         result = await spotifyauth.sleep_timer(ctx.author.id,
                                                total_time_secs, fade_time)
-        await ctx.send(result)
+
+        # If an error occurred, send the error to the user
+        if not result['Error'] == 0:
+            await ctx.send(result['Error'])
+            return -1
+
+        await ctx.send(result['info'])
 
     @commands.command(name='recs')
     async def recommendations(self, ctx, number: int, output: str, *source):
@@ -252,11 +226,11 @@ class SpotifyAPI(commands.Cog):
         source = [computations.link_to_uri(link) for link in source]
         recs = spotifyauth.get_recommendations(str(ctx.author.id),
                                                number, source)
-        if not isinstance(recs, dict):
-            await ctx.send(recs)
+        if recs['Error'] != 0:
+            await ctx.send(recs['Error'])
             return -1
 
-        track_info = [[tracks['name'], tracks['artists'][0]['name']] for tracks in recs['tracks']]
+        track_info = [[tracks['name'], tracks['artists'][0]['name']] for tracks in recs['info']['tracks']]
 
         if output.lower() == "dm":
             # Form inline code message to show song names and artists
@@ -267,13 +241,23 @@ class SpotifyAPI(commands.Cog):
 
         elif output.lower() == "queue":
             # add tracks to queue
-            await ctx.send(spotifyauth.add_to_queue(str(ctx.author.id),
-                                                    recs['tracks']))
+            result = await spotifyauth.add_to_queue(str(ctx.author.id),
+                                                    recs['info']['tracks'])
+            if result['Error'] != 0:
+                await ctx.send(result['Error'])
+                return -1
+
+            await ctx.send(result['info'])
 
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
-            await ctx.send(spotifyauth.create_playlist(str(ctx.author.id),
-                                                       recs['tracks']))
+            result = await spotifyauth.create_playlist(str(ctx.author.id),
+                                                       recs['info']['tracks'])
+            if result['Error'] != 0:
+                await ctx.send(result['Error'])
+                return -1
+
+            await ctx.send(result['info'])
 
     @commands.command(name='artists')
     async def artists(self, ctx, playlist: str):
@@ -300,6 +284,12 @@ class SpotifyAPI(commands.Cog):
         
         songs = spotifyauth.top_ten(str(ctx.author.id), time_range)
 
+        if songs['Error'] != 0:
+            await ctx.send(songs['Error'])
+            return -1
+
+        songs = songs['info']
+
         song_details = [[i, track['name'], track['artists'][0]['name']] for i, track in enumerate(songs)]
 
         # Form inline code message to show song names and artists
@@ -315,6 +305,12 @@ class SpotifyAPI(commands.Cog):
         """
         
         songs = spotifyauth.top_ten(str(ctx.author.id), "short")
+
+        if songs['Error'] != 0:
+            await ctx.send(songs['Error'])
+            return -1
+
+        songs = songs['info']
 
         artists = []
         for song in songs:
