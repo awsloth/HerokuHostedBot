@@ -325,5 +325,7 @@ async def get_artists(user: str, playlist: str) -> dict:
 
     percentages = [format(artists[key]/sum(map(int, artists.values()))*100, '.3') for key in artists.keys()]
 
-    return {"info": sorted(list(zip(artists.keys(), percentages)), key=lambda x: 100-float(x[1]))[:10], "Error": 0}
+    return {"info": {"artists": sorted(list(zip(artists.keys(), percentages)), key=lambda x: 100-float(x[1]))[:10],
+            "Total": sum(map(int, artists.values()))},
+            "Error": 0}
 

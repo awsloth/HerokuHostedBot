@@ -271,8 +271,9 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(artists['Error'])
             return -1
 
+        artists_info = [f"{i+1}. {artist_info[0]} with {artist_info[1]}%" for i, artist_info in enumerate(artists['info']['artists'])]
         # Form inline code message to show song names and artists
-        messages = computations.form_message([f"{artist} with {percentage}%" for artist, percentage in artists['info']])
+        messages = computations.form_message(artists_info+[f"Total artists: {artists['info']['Total']}"])
 
         for message in messages:
             await ctx.send(message)
