@@ -241,7 +241,7 @@ class SpotifyAPI(commands.Cog):
 
         elif output.lower() == "queue":
             # add tracks to queue
-            result = await spotifyauth.add_to_queue(str(ctx.author.id),
+            result = spotifyauth.add_to_queue(str(ctx.author.id),
                                                     recs['info']['tracks'])
             if result['Error'] != 0:
                 await ctx.send(result['Error'])
