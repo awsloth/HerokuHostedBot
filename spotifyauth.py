@@ -14,7 +14,13 @@ client_secret = os.getenv('SPOTIFY_SECRET')
 redirect_uri = "http://localhost:8080/"
 
 
-async def setup_user(ctx, bot, scope) -> dict:
+async def setup_user(ctx, bot, scope: str) -> dict:
+    """
+    :arg ctx: A discord context object
+    :arg bot: An instance of discord bot class
+    :arg scope: The scope to set up for
+    Sets up a user for the specified scope
+    """
     # Get the url and instance of oauth
     # to authorise the user
     url, oauth = get_url(scope)
@@ -119,11 +125,10 @@ re-authenticate using the `+setup` command please```'''}
     return {"info": songs, "Error": 0}
 
 
-async def sleep_timer(user: str, time: int, fade_time: int) -> dict:
+async def sleep_timer(user: str, time: int) -> dict:
     """
     :arg user: The user to create a sleep time for
     :arg time: The time for the tracks to stop after in seconds (Required)
-    :arg fade_time: The fade time set in spotify settings between songs
     Stops playback after the specified time
     """
     # Set the scope needed for this function
@@ -184,6 +189,7 @@ def get_recommendations(user: str, songs: int, source: list) -> dict:
             if item[:15] == "spotify:artist:":
                 artists.append(item[15:])
 
+    # Sort through parameters to specify the correct seed to the command
     if len(artists) != 0 and len(tracks) != 0:
         recs = sp.get_recommendations(songs, artists=artists, tracks=tracks)
     elif len(artists) != 0:
@@ -268,6 +274,11 @@ def top_ten(user: str, time_range: str) -> dict:
 
 
 async def genres(user: str, artists: list) -> list:
+    """
+    :arg user: The id of the user
+    :arg artists: List of artists to get the genre of
+    Gets the genres of a given list of artist
+    """
     # Get the auth code
     code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
 
@@ -281,6 +292,11 @@ async def genres(user: str, artists: list) -> list:
 
 
 async def get_artists(user: str, playlist: str) -> dict:
+    """
+    :arg user: The user id
+    :arg playlist: The id of the playlist to look at
+    """
+    # If the user isn't in the database send an error
     if not computations.check_user_exist(user):
         return {"info": [],
                 "Error": f'''```User doesn't exist
@@ -317,15 +333,17 @@ async def get_artists(user: str, playlist: str) -> dict:
             songs = await future
             tracks += songs['items']
 
+    # Get all the artists for the tracks
     artists = []
     for track in tracks:
         artists += [artist['name'] for artist in track['track']['artists']]
 
+    # Convert the list to a dictionary with counts of each artist
     artists = collections.Counter(artists)
 
+    # Work out the percentage for each artist
     percentages = [format(artists[key]/sum(map(int, artists.values()))*100, '.3') for key in artists.keys()]
 
     return {"info": {"artists": sorted(list(zip(artists.keys(), percentages)), key=lambda x: 100-float(x[1]))[:10],
             "Total": sum(map(int, artists.values()))},
             "Error": 0}
-
