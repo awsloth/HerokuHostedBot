@@ -887,7 +887,7 @@ def init(redirect_uri: str, user: str,
         # so all available functions can be used
         scope = verified_scope
 
-    if check_user(user):
+    if check_func(user):
         update_func(user, access_token, refresh_token, time_left, scope)
     else:
         save_func(user, access_token, refresh_token, time_left, scope)
