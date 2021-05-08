@@ -176,7 +176,7 @@ def add_to_queue(user: str, tracks: list) -> str:
     scope = "user-modify-playback-state"
     if not computations.check_user(user, scope):
         # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+        code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
         # Initiate the APIReq class to interact with the api
         sp = spotifyapi.APIReq(code)
 
