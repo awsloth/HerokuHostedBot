@@ -78,7 +78,7 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
         lines = []
         for div in divs:
             line = div.text
-            matches = re.findall("[^([ ][A-Z]", line)
+            matches = re.findall("[^([ A-Z][A-Z]", line)
             y = 0
             indexes = [0]+[(y := line.index(match, y)) for match in matches]+[len(line)]
             split_up = []
