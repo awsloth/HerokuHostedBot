@@ -13,6 +13,7 @@ header = {"Authorization": f"Bearer {code}"}
 # Base url of site
 base = "http://api.genius.com"
 
+
 def get_lyrics(search_term: str) -> dict:
     """
     :arg search_term: The name of the song to find the lyrics for
@@ -53,18 +54,18 @@ def get_lyrics(search_term: str) -> dict:
         # Find the child p element
         lyrics = lyrics_div[0].find("p")
 
-        # Store the lines with <br/> cleared and seperated by \n chars
+        # Store the lines with <br/> cleared and separated by \n chars
         lines = lyrics.text.replace("<br/>", "").split("\n")
 
     else:
         # Find the lyrics div
-        divs = soup.find_all("div", {"class":"Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
+        divs = soup.find_all("div", {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
 
-        # Stores the lines splitted by the <br/> tags and
+        # Stores the lines split by the <br/> tags and
         # removing div tags from front and end
         lines = []
         for i in range(len(divs)//2):
             lines += str(divs[i*2])[51:-6].split("<br/>")
 
     # Return the results
-    return {"info": lines, "Error":0}
+    return {"info": lines, "Error": 0}

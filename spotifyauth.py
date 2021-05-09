@@ -347,3 +347,31 @@ async def get_artists(user: str, playlist: str) -> dict:
     return {"info": {"artists": sorted(list(zip(artists.keys(), percentages)), key=lambda x: 100-float(x[1]))[:10],
             "Total": sum(map(int, artists.values()))},
             "Error": 0}
+
+
+def cur_song(user: str) -> dict:
+    """
+    :arg user: The id of the user to get the current song of
+    """
+    # If the user isn't in the database send an error
+    if not computations.check_user_exist(user):
+        return {"info": [],
+                "Error": f'''```User doesn't exist
+    authenticate using the `+setup` command please```'''}
+
+    # Get the auth code
+    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
+
+    # Create an APIReq instance
+    sp = spotifyapi.APIReq(code)
+
+    # Get the information about the user's playback
+    info = sp.get_info_playback()
+
+    # Create a string holding the song name and artist
+    search = f"{info['item']['name']} {info['item']['artists'][0]['name']}"
+
+    # Return the information
+    return {"info": search, "Error": 0}

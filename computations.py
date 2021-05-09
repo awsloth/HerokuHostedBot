@@ -147,7 +147,7 @@ def form_message(items: list) -> list:
     messages = []
     while i < len(items):
         message = "```"
-        while i < len(items) and (len(message) + 3) + len(items[i]) < 2000:
+        while i < len(items) and (len(message) + 3 + len(items[i]) <= 2000):
             message += f"{items[i]}\n"
             i += 1
 

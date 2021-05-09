@@ -210,12 +210,11 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(message)
 
     @commands.command(name='sleep')
-    async def sleep_timer(self, ctx, sleep_time, fade_time: typing.Union[int, None]):
+    async def sleep_timer(self, ctx, sleep_time):
         """
         Stops music playing after given time,
         but waits until the end of the track
         :arg time: Time to wait before sleeping (HH:MM:SS)
-        :arg fade_time: The fade time set in spotify settings between songs
         """
         # Split up the time into hours, minutes and secs
         hours, minutes, seconds = map(int, sleep_time.split(":"))
@@ -225,7 +224,7 @@ class SpotifyAPI(commands.Cog):
 
         await ctx.send("Waiting to sleep")
         result = await spotifyauth.sleep_timer(ctx.author.id,
-                                               total_time_secs, fade_time)
+                                               total_time_secs)
 
         # If an error occurred, send the error to the user
         if not result['Error'] == 0:
@@ -406,6 +405,34 @@ class SpotifyAPI(commands.Cog):
         """
         # Attempt to get the lyrics of the song from the genius website
         result = genius.get_lyrics(' '.join(search))
+
+        # If an error occurred show the error
+        if result['Error'] != 0:
+            await ctx.send(result['Error'])
+            return -1
+
+        # Create inline text to show the info
+        messages = computations.form_message(result['info'])
+
+        # Send each message
+        for message in messages:
+            await ctx.send(message)
+
+    @commands.command(nane='curLyrics')
+    async def curLyrics(self, ctx):
+        """
+        Grabs the lyrics of the song being currently listened to
+        """
+        # Get the search value for the song
+        search_term = spotifyauth.cur_song(str(ctx.author.id))
+
+        # If an error occurred show as such
+        if search_term['Error'] != 0:
+            await ctx.send(search_term['Error'])
+            return -1
+
+        # Get the lyrics for the song
+        result = genius.get_lyrics(search_term['info'])
 
         # If an error occurred show the error
         if result['Error'] != 0:
