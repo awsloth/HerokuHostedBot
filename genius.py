@@ -22,8 +22,11 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     :return list: A list containing the lines of the song
     Searches the genius website to get the lyrics of a song
     """
-    # Convert spaces to %20 for url 
-    search_term = str(search_term+" "+artist).replace(" ", "%20")
+    # Convert spaces to %20 for url
+    if artist is not None:
+        search_term = str(search_term+" "+artist).replace(" ", "%20")
+    else:
+        search_term = str(search_term).replace(" ", "%20")
 
     # Create url for request
     url = f"{base}/search?q={search_term}"
