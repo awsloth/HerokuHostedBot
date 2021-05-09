@@ -61,8 +61,10 @@ def get_lyrics(search_term: str) -> dict:
         divs = soup.find_all("div", {"class":"Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
 
         # Stores the lines splitted by the <br/> tags and
-        # removing div tags from front and e d
-        lines = str(divs[0])[51:6].split("<br/>")
+        # removing div tags from front and end
+        lines = []
+        for i in range(len(divs)//2):
+            lines += str(divs[i*2])[51:-6].split("<br/>")
 
     # Return the results
     return {"info": lines, "Error":0}
