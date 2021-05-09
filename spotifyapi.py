@@ -742,16 +742,16 @@ def save_data(user: str, auth_token: str, refresh_token: str,
     Saves the given data in a file for later use
     """
     # Create file name string
-    file_name = fr"\{user}.cache"
+    file_name = fr"\\{user}.cache"
 
     # Define file_location
-    file_location = fr"{os.getcwd()}\cache"
+    file_location = f"{os.getcwd()}\\cache"
 
     # Create directory if not already existent
-    os.makedirs(fr"{file_location}", exist_ok=True)
+    os.makedirs(f"{file_location}", exist_ok=True)
 
     # Save details
-    with open(fr"{file_location}{file_name}", "w") as f:
+    with open(f"{file_location}{file_name}", "w") as f:
         print(auth_token, refresh_token, time_left,
               scope, sep='\n', file=f)
 
@@ -764,8 +764,8 @@ def read_data(user: str) -> list:
     Reads the data from the user's file
     """
     # Define file_location
-    file_location = fr"{os.getcwd()}\cache"
-    with open(fr"{file_location}\{user}.cache") as f:
+    file_location = f"{os.getcwd()}\\cache"
+    with open(f"{file_location}\\{user}.cache") as f:
         contents = [line.rstrip() for line in f.readlines()]
 
     return contents
@@ -780,10 +780,10 @@ def check_user(user: str) -> bool:
     if the user has a file
     """
     # Define file_location
-    file_location = fr"{os.getcwd()}\cache"
+    file_location = f"{os.getcwd()}\\cache"
 
     # Create file name string
-    file_name = fr"{user}.cache"
+    file_name = f"{user}.cache"
 
     # If file name in the files at the location
     return file_name in os.listdir(file_location)
