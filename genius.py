@@ -63,6 +63,8 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     if not len(results) > 0:
         return {"info": [], "Error": "Search term came up with no results, try again"}
 
+    lyrics_url = None
+
     # Get the url from the results
     if artist is not None:
         found = False

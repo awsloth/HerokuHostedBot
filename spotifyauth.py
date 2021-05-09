@@ -77,7 +77,9 @@ async def get_user_songs(user: str) -> dict:
 re-authenticate using the `+setup` command please```'''}
 
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
@@ -141,7 +143,9 @@ async def sleep_timer(user: str, time: int) -> dict:
     await asyncio.sleep(time)
 
     # Get the auth code and APIReq class to interact with the API
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
 
     sp = spotifyapi.APIReq(code)
 
@@ -170,7 +174,9 @@ def get_recommendations(user: str, songs: int, source: list) -> dict:
     Return recommendations for the user
     """
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
@@ -211,7 +217,9 @@ def add_to_queue(user: str, tracks: list) -> dict:
     scope = "user-modify-playback-state"
     if not computations.check_user(user, scope):
         # Get the auth code
-        code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+        code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                               read_func=computations.get_user, update_func=computations.update_user,
+                               check_func=computations.check_user_exist)
         # Initiate the APIReq class to interact with the api
         sp = spotifyapi.APIReq(code)
 
@@ -234,7 +242,9 @@ def create_playlist(user: str, tracks: list) -> dict:
         return {"info": [], "Error": "Error, user not authenticated for request, use command `+setup`"}
     
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
@@ -263,7 +273,9 @@ def top_ten(user: str, time_range: str) -> dict:
         return {"info": [], "Error": "Error, user not authenticated for request, use command `+setup`"}
 
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
@@ -280,7 +292,9 @@ async def genres(user: str, artists: list) -> list:
     Gets the genres of a given list of artist
     """
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user, read_func=computations.get_user, update_func=computations.update_user, check_func=computations.check_user_exist)
+    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
@@ -310,7 +324,7 @@ async def get_artists(user: str, playlist: str) -> dict:
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
 
-    playlist_id = playlist.replace("spotify:playlist:", '')
+    playlist_id = computations.uri_to_id(playlist)
 
     # Get the total number of playlists the user has
     total = sp.get_tracks_playlist(playlist_id, 1)['total']

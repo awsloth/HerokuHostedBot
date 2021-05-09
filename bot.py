@@ -107,8 +107,14 @@ class AccountCommands(commands.Cog):
                            'sleep': ['user-modify-playback-state',
                                      'user-read-playback-state'],
                            'recs': ['user-modify-playback-state',
-                                    'playlist-modify-public']}
-        command_names = ['compare', 'sleep', 'recs']
+                                    'playlist-modify-public'],
+                           'artists': [],
+                           'top10': ['user-top-read'],
+                           'topGenre': ['user-top-read'],
+                           'curLyrics': ['user-read-playback-state'],
+                           'lyrics': []}
+        command_names = ('compare', 'sleep', 'recs', 'artists', 'top10',
+                         'topGenre', 'curLyrics', 'lyrics')
         scope = []
         # For each scope type specified, add the scope referenced
         # and check if the scope type is a command that the scope is ok
@@ -214,7 +220,7 @@ class SpotifyAPI(commands.Cog):
         """
         Stops music playing after given time,
         but waits until the end of the track
-        :arg time: Time to wait before sleeping (HH:MM:SS)
+        :arg sleep_time: Time to wait before sleeping (HH:MM:SS)
         """
         # Split up the time into hours, minutes and secs
         hours, minutes, seconds = map(int, sleep_time.split(":"))
