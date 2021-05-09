@@ -1,6 +1,6 @@
 # Import libraries
 import requests
-import re
+import bs4
 
 # Import from libraries
 from bs4 import BeautifulSoup
@@ -68,7 +68,7 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
         found = False
         for result in results:
             name = [letter for letter in result['result']['primary_artist']['name'].lower() if ord(letter) != 8203]
-            if ''.join(name) == artist.lower():
+            if artist.lower() in ''.join(name):
                 lyrics_url = result['result']['url']
                 found = True
                 break
@@ -97,19 +97,9 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     else:
         # Find the lyrics div
         divs = soup.find_all("div", {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
+        tag_text = [child.text if not isinstance(child, bs4.NavigableString) else child for child in first.children]
+        lines = list(filter(lambda x: x!='', tag_text))
 
-        # Stores the lines split by the <br/> tags and
-        # removing div tags from front and end
-        lines = []
-        for div in divs:
-            line = div.text
-            matches = re.findall("[^([ A-Z][A-Z]", line)
-            y = 0
-            indexes = [0]+[(y := line.index(match, y)) for match in matches]+[len(line)]
-            split_up = []
-            for i, index in enumerate(indexes[1:], 1):
-                split_up.append(line[indexes[i - 1] + 1:index + 1])
-            lines += split_up
 
     # Return the results
     return {"info": lines, "Error": 0}
