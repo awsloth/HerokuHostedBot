@@ -13,6 +13,7 @@ from discord.ext import commands
 # Import custom scripts
 import spotifyauth
 import computations
+import genius
 
 # Load the env file containing the discord bot token
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -392,6 +393,27 @@ class SpotifyAPI(commands.Cog):
 
         # Form inline code message to show song names and artists
         messages = computations.form_message(sorted(list(genres)))
+
+        # Send each message
+        for message in messages:
+            await ctx.send(message)
+
+    @commands.command(name='lyrics')
+    async def lyrics(self, ctx, *search):
+        """
+        Searches for lyrics of given song
+        :arg search: The name (and artist) of the song
+        """
+        # Attempt to get the lyrics of the song from the genius website
+        result = genius.get_lyrics(' '.join(search))
+
+        # If an error occurred show the error
+        if result['Error'] != 0:
+            await ctx.send(result['Error'])
+            return -1
+
+        # Create inline text to show the info
+        messages = computations.form_message(result['info'])
 
         # Send each message
         for message in messages:
