@@ -1,12 +1,13 @@
 # Import standard libraries
+import os
+
+# Import 3rd party libraries
 import psycopg2
 
 # Import custom script
 import spotifyauth
 
-URL1 = "postgres://vqknvpawvibctc:3416e185bcfa3ba0423ac101e908d815f01a1837322"
-URL2 = "c4950ad31a1ca897e2cb2@ec2-54-228-139-34.eu-west-1.compute.amazonaws.com:5432/d2if6njdaf83bu"
-URL = URL1+URL2
+URL = os.getenv('DATABASE_URL')
 
 
 def check_user_exist(user: str) -> bool:
