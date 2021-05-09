@@ -371,7 +371,7 @@ def cur_song(user: str) -> dict:
     info = sp.get_info_playback()
 
     # Create a string holding the song name and artist
-    search = f"{info['item']['name']} {info['item']['artists'][0]['name']}"
+    search = f"{info['item']['artists'][0]['name']} {info['item']['name']}"
 
     # Return the information
     return {"info": search, "Error": 0}
