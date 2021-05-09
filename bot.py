@@ -419,7 +419,7 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(message)
 
     @commands.command(nane='curLyrics')
-    async def curLyrics(self, ctx):
+    async def cur_lyrics(self, ctx):
         """
         Grabs the lyrics of the song being currently listened to
         """

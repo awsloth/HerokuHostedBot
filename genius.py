@@ -15,19 +15,11 @@ header = {"Authorization": f"Bearer {code}"}
 base = "http://api.genius.com"
 
 
-def get_lyrics(search_term: str, artist: str = None) -> dict:
+def search(search_term: str) -> dict:
     """
     :arg search_term: The name of the song to find the lyrics for
-    :arg artist: Artist of song
-    :return list: A list containing the lines of the song
-    Searches the genius website to get the lyrics of a song
+    Searches through genius for the song and returns the dict
     """
-    # Convert spaces to %20 for url
-    if artist is not None:
-        search_term = str(search_term+" "+artist).replace(" ", "%20")
-    else:
-        search_term = str(search_term).replace(" ", "%20")
-
     # Create url for request
     url = f"{base}/search?q={search_term}"
 
@@ -36,6 +28,36 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
 
     # Get the returned results
     results = r['response']['hits']
+
+    return results
+
+
+def encode_search(name: str, artist: str = None) -> str:
+    """
+    :arg name: Name of song
+    :arg artist: Artist of song
+    Encodes search for use in url
+    """
+    # Convert spaces to %20 for url
+    if artist is not None:
+        encoded_term = str(name+" "+artist).replace(" ", "%20")
+    else:
+        encoded_term = str(name).replace(" ", "%20")
+
+    return encoded_term
+
+
+def get_lyrics(search_term: str, artist: str = None) -> dict:
+    """
+    :arg search_term: The name of the song to find the lyrics for
+    :arg artist: Artist of song
+    :return list: A list containing the lines of the song
+    Searches the genius website to get the lyrics of a song
+    """
+    print(search_term, artist)
+    search_term = encode_search(search_term, artist)
+
+    results = search(search_term)
 
     # If there are no results return an error
     if not len(results) > 0:
