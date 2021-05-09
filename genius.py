@@ -96,10 +96,9 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
 
     else:
         # Find the lyrics div
-        divs = soup.find_all("div", {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
-        tag_text = [child.text if not isinstance(child, bs4.NavigableString) else child for child in first.children]
-        lines = list(filter(lambda x: x!='', tag_text))
-
+        div = soup.find("div", {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
+        tag_text = [child.text if not isinstance(child, bs4.NavigableString) else child for child in div.children]
+        lines = list(filter(lambda x: x != '', tag_text))
 
     # Return the results
     return {"info": lines, "Error": 0}
