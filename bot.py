@@ -439,6 +439,8 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(result['Error'])
             return -1
 
+        print(result['info'])
+
         # Create inline text to show the info
         messages = computations.form_message(result['info'])
 

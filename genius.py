@@ -66,9 +66,9 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     if len(lyrics_div) > 0:
         # Find the child p element
         lyrics = lyrics_div[0].find("p")
-
+        print(lyrics.text)
         # Store the lines with <br/> cleared and separated by \n chars
-        lines = lyrics.text.replace("<br/>", "").split("\n")
+        lines = lyrics.text.split("\n")
 
     else:
         # Find the lyrics div
@@ -83,7 +83,7 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
             y = 0
             indexes = [0]+[(y := line.index(match, y)) for match in matches]+[len(line)]
             split_up = []
-            for j, index in enumerate(indexes, 1):
+            for j, index in enumerate(indexes[1:], 1):
                 split_up.append(line[indexes[j - 1] + 1:index + 1])
             lines += split_up
 
