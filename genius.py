@@ -1,5 +1,6 @@
 # Import libraries
 import requests
+import re
 
 # Import from libraries
 from bs4 import BeautifulSoup
@@ -77,7 +78,14 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
         # removing div tags from front and end
         lines = []
         for i in range(len(divs)//2):
-            lines += str(divs[i*2])[51:-6].split("<br/>")
+            line = divs[i*2].text
+            matches = re.findall("[a-z][A-Z]", line)
+            y = 0
+            indexes = [0]+[(y := line.index(match, y)) for match in matches]+[len(line)]
+            split_up = []
+            for j, index in enumerate(indexes, 1):
+                split_up.append(line[indexes[j - 1] + 1:index + 1])
+            lines += split_up
 
     # Return the results
     return {"info": lines, "Error": 0}
