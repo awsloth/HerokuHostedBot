@@ -42,8 +42,8 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     if artist is not None:
         found = False
         for result in results:
-            print(result['result']['primary_artist']['name'].lower(), artist.lower())
-            if result['result']['primary_artist']['name'].lower() == artist.lower():
+            name = [letter for letter in result['result']['primary_artist']['name'].lower() if ord(letter) != 8203]
+            if ''.join(name) == artist.lower():
                 lyrics_url = result['result']['url']
                 found = True
                 break
