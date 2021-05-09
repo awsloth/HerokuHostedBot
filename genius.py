@@ -14,14 +14,15 @@ header = {"Authorization": f"Bearer {code}"}
 base = "http://api.genius.com"
 
 
-def get_lyrics(search_term: str) -> dict:
+def get_lyrics(search_term: str, artist: str = None) -> dict:
     """
     :arg search_term: The name of the song to find the lyrics for
+    :arg artist: Artist of song
     :return list: A list containing the lines of the song
     Searches the genius website to get the lyrics of a song
     """
     # Convert spaces to %20 for url 
-    search_term = search_term.replace(" ", "%20")
+    search_term = str(search_term+" "+artist).replace(" ", "%20")
 
     # Create url for request
     url = f"{base}/search?q={search_term}"
@@ -37,7 +38,18 @@ def get_lyrics(search_term: str) -> dict:
         return {"info": [], "Error": "Search term came up with no results, try again"}
 
     # Get the url from the results
-    lyrics_url = results[0]['result']['url']
+    if artist is not None:
+        found = False
+        for result in results:
+            print(result['result']['primary_artist']['name'].lower(), artist.lower())
+            if result['result']['primary_artist']['name'].lower() == artist.lower():
+                lyrics_url = result['result']['url']
+                found = True
+                break
+        if not found:
+            return {'info': [], 'Error': 'Lyrics not found'}
+    else:
+        lyrics_url = results[0]['result']['url']
 
     # Get the returned html
     r = requests.get(lyrics_url)

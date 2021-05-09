@@ -432,7 +432,7 @@ class SpotifyAPI(commands.Cog):
             return -1
 
         # Get the lyrics for the song
-        result = genius.get_lyrics(search_term['info'])
+        result = genius.get_lyrics(*search_term['info'])
 
         # If an error occurred show the error
         if result['Error'] != 0:
