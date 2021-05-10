@@ -269,7 +269,7 @@ class SpotifyAPI(commands.Cog):
         total_time_secs = hours*3600+minutes*60+seconds
 
         await ctx.send("Waiting to sleep")
-        result = await spotifyauth.sleep_timer(ctx.author.id,
+        result = await spotifyauth.sleep_timer(str(ctx.author.id),
                                                total_time_secs)
 
         # If an error occurred, send the error to the user
