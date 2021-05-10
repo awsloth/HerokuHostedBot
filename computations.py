@@ -178,20 +178,52 @@ async def show_overlap(*users: list[str]) -> dict:
         else:
             return response
 
+    overlap = intersection(user_songs)
+
+    return overlap
+
+
+async def playlist_overlap(user: str, *playlist_ids) -> dict:
+    """
+    :arg user: The user to authenticate
+    :arg playlist_ids: The ids of the playlists to compare
+    Finds the intersections between the playlists
+    """
+    tracks = []
+    for playlist_id in playlist_ids:
+        tracks.append(await spotifyauth.get_playlist_songs(user, playlist_id))
+
+    user_songs = []
+    for play_tracks in tracks:
+        track_ids = [x['track']['id'] for x in play_tracks]
+        track_names = [x['track']['name'] for x in play_tracks]
+        track_artists = [x['track']['artists'][0]['name'] for x in play_tracks]
+        songs = dict(zip(track_ids, zip(track_names, track_artists)))
+        user_songs.append(songs)
+
+    return intersection(user_songs)
+
+
+def intersection(song_list: list) -> dict:
+    """
+    :arg song_list: List of song lists to find the intersection of
+    Finds the intersection of the songs
+    """
+
     # Find the set intersection between all the user's songs
-    songs = set(user_songs[0])
-    for i in range(1, len(user_songs)):
-        songs = set(user_songs[i]) & songs
+    songs = set(song_list[0])
+    for i in range(1, len(song_list)):
+        songs = set(song_list[i]) & songs
 
     # Find the total number of songs
-    total_songs = sum(map(len, [song_set for song_set in user_songs]))
+    total_songs = sum(map(len, [song_set for song_set in song_list]))
 
     # Find the percentage overlap
     overlap_percentage = format((len(songs) / total_songs) * 100, '.3')
 
     # Find song names with id dict
     id_dict = {}
-    for song_dict in user_songs:
+    for song_dict in song_list:
         for key in song_dict:
             id_dict.update({key: song_dict[key]})
 

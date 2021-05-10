@@ -215,6 +215,39 @@ class SpotifyAPI(commands.Cog):
         for message in messages:
             await ctx.send(message)
 
+    @commands.command(name='comparePlay')
+    async def compare_play(self, ctx, playlist1, playlist2):
+        """
+        Compares the contents of two playlists
+        :arg playlist1: The link for the first playlist
+        :arg playlist2: The link for the second playlist
+        """
+        playlists = [playlist1, playlist2]
+        playlists = [computations.uri_to_id(computations.link_to_uri(playlist)) for playlist in playlists]
+
+        info = await computations.playlist_overlap(str(ctx.author.id), *playlists)
+
+        if info['Error'] != 0:
+            await ctx.send(info['Error'])
+            return -1
+
+        # Get the overlap, overlap percentage and songs
+        overlap_percentage = info['info']['percentage']
+        overlap = info['info']['total']
+        song_details = info['info']['songs']
+
+        # Show the user the overlap and songs
+        await ctx.send(f"The playlists have a {overlap_percentage}% overlap, or {overlap} songs")
+
+        # Form inline code message to show song names and artists
+        messages = computations.form_message([f"{name} by {artist}" for name, artist in song_details])
+
+        # Send each separate message
+        for message in messages:
+            await ctx.send(message)
+
+
+
     @commands.command(name='sleep')
     async def sleep_timer(self, ctx, sleep_time):
         """

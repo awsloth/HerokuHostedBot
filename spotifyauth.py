@@ -305,17 +305,12 @@ async def genres(user: str, artists: list) -> list:
     return list(set(genre_list))
 
 
-async def get_artists(user: str, playlist: str) -> dict:
+async def get_playlist_songs(user: str, playlist_id: str) -> list:
     """
-    :arg user: The user id
-    :arg playlist: The id of the playlist to look at
+    :arg user: The user to authenticate
+    :arg playlist_id: The id of the playlist to get songs for
+    Gets all the songs in a playlist
     """
-    # If the user isn't in the database send an error
-    if not computations.check_user_exist(user):
-        return {"info": [],
-                "Error": f'''```User doesn't exist
-    authenticate using the `+setup` command please```'''}
-
     # Get the auth code
     code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
                            read_func=computations.get_user, update_func=computations.update_user,
@@ -323,8 +318,6 @@ async def get_artists(user: str, playlist: str) -> dict:
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
-
-    playlist_id = computations.uri_to_id(playlist)
 
     # Get the total number of playlists the user has
     total = sp.get_tracks_playlist(playlist_id, 1)['total']
@@ -346,6 +339,24 @@ async def get_artists(user: str, playlist: str) -> dict:
         for future in futures:
             songs = await future
             tracks += songs['items']
+
+    return tracks
+
+
+async def get_artists(user: str, playlist: str) -> dict:
+    """
+    :arg user: The user id
+    :arg playlist: The id of the playlist to look at
+    """
+    # If the user isn't in the database send an error
+    if not computations.check_user_exist(user):
+        return {"info": [],
+                "Error": f'''```User doesn't exist
+    authenticate using the `+setup` command please```'''}
+
+    playlist_id = computations.uri_to_id(playlist)
+
+    tracks = await get_playlist_songs(user, playlist_id)
 
     # Get all the artists for the tracks
     artists = []
