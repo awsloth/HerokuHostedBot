@@ -119,9 +119,9 @@ re-authenticate using the `+setup` command please```'''}
                 tracks += songs['items']
 
     # Get all the songs ids and get all the unique songs
-    track_ids = [x['track']['id'] for x in tracks]
-    track_names = [x['track']['name'] for x in tracks]
-    track_artists = [x['track']['artists'][0]['name'] for x in tracks]
+    track_ids = [x['track']['id'] for x in tracks  if not x['track']['is_local']]
+    track_names = [x['track']['name'] for x in tracks  if not x['track']['is_local']]
+    track_artists = [x['track']['artists'][0]['name'] for x in tracks  if not x['track']['is_local']]
     songs = dict(zip(track_ids, zip(track_names, track_artists)))
 
     return {"info": songs, "Error": 0}

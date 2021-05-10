@@ -195,9 +195,9 @@ async def playlist_overlap(user: str, *playlist_ids) -> dict:
 
     user_songs = []
     for play_tracks in tracks:
-        track_ids = [x['track']['id'] for x in play_tracks]
-        track_names = [x['track']['name'] for x in play_tracks]
-        track_artists = [x['track']['artists'][0]['name'] for x in play_tracks]
+        track_ids = [x['track']['id'] for x in play_tracks if not x['track']['is_local']]
+        track_names = [x['track']['name'] for x in play_tracks if not x['track']['is_local']]
+        track_artists = [x['track']['artists'][0]['name'] for x in play_tracks if not x['track']['is_local']]
         songs = dict(zip(track_ids, zip(track_names, track_artists)))
         user_songs.append(songs)
 
