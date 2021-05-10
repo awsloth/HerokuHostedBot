@@ -216,29 +216,40 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(message)
 
     @commands.command(name='comparePlay')
-    async def compare_play(self, ctx, *playlists):
+    async def compare_play(self, ctx, type, *playlists):
         """
         Compares the contents of two playlists
+        :arg type: The type of match
         :arg playlists: The links for the playlists
         """
+        if type not in ['exact', 'rough']:
+            await ctx.send(f"type {type} not valid try 'exact' or 'rough'")
+            return -1
+
         playlists = [computations.uri_to_id(computations.link_to_uri(playlist)) for playlist in playlists]
 
-        info = await computations.playlist_overlap(str(ctx.author.id), *playlists)
+        info = await computations.playlist_overlap(str(ctx.author.id), type, *playlists)
 
         if info['Error'] != 0:
             await ctx.send(info['Error'])
             return -1
 
-        # Get the overlap, overlap percentage and songs
-        overlap_percentage = info['info']['percentage']
-        overlap = info['info']['total']
-        song_details = info['info']['songs']
+        if type == "exact":
+            # Get the overlap, overlap percentage and songs
+            overlap_percentage = info['info']['percentage']
+            overlap = info['info']['total']
+            song_details = info['info']['songs']
 
-        # Show the user the overlap and songs
-        await ctx.send(f"The playlists have a {overlap_percentage}% overlap, or {overlap} songs")
+            # Show the user the overlap and songs
+            await ctx.send(f"The playlists have a {overlap_percentage}% overlap, or {overlap} songs")
 
-        # Form inline code message to show song names and artists
-        messages = computations.form_message([f"{name} by {artist}" for name, artist in song_details])
+            # Form inline code message to show song names and artists
+            messages = computations.form_message([f"{name} by {artist}" for name, artist in song_details])
+        else:
+            song_details = info['info']['songs']
+
+            # Form inline code message to show song names and artists
+            messages = computations.form_message([f"{details[0]} by {details[1]} with {num} matches" for num, details in song_details])
 
         # Send each separate message
         for message in messages:

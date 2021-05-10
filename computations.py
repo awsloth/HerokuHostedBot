@@ -1,5 +1,6 @@
 # Import standard libraries
 import os
+import collections
 
 # Import 3rd party libraries
 import psycopg2
@@ -183,9 +184,10 @@ async def show_overlap(*users: list[str]) -> dict:
     return overlap
 
 
-async def playlist_overlap(user: str, *playlist_ids) -> dict:
+async def playlist_overlap(user: str, type: str, *playlist_ids) -> dict:
     """
     :arg user: The user to authenticate
+    :arg type: The type of intersection to find
     :arg playlist_ids: The ids of the playlists to compare
     Finds the intersections between the playlists
     """
@@ -201,7 +203,10 @@ async def playlist_overlap(user: str, *playlist_ids) -> dict:
         songs = dict(zip(track_ids, zip(track_names, track_artists)))
         user_songs.append(songs)
 
-    return intersection(user_songs)
+    if type == "exact":
+        return intersection(user_songs)
+
+    return ordered_songs(user_songs)
 
 
 def intersection(song_list: list) -> dict:
@@ -233,6 +238,27 @@ def intersection(song_list: list) -> dict:
     # Return the information
     return {"info": {"songs": song_details, "total": len(songs),
                      "percentage": overlap_percentage}, "Error": 0}
+
+
+def ordered_songs(song_list: list) -> dict:
+    """
+    :arg song_list: List of song lists to find the intersection of
+    Finds the intersection of the songs
+    """
+    songs = []
+    for song_set in song_list:
+        songs += song_set
+
+    song_counts = collections.Counter(songs)
+    filtered_songs = [[song_counts[song], song] for song in song_counts.keys() if song_counts[song] > len(song_list)//2]
+
+    song_dict = {}
+    for sub_dict in song_list:
+        song_dict.update(sub_dict)
+
+    song_info = [[song[0], song_dict[song[1]]] for song in filtered_songs]
+
+    return {"info": {"songs": song_info}, "Error": 0}
 
 
 def link_to_uri(link: str) -> str:
