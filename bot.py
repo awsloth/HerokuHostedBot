@@ -216,13 +216,11 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(message)
 
     @commands.command(name='comparePlay')
-    async def compare_play(self, ctx, playlist1, playlist2):
+    async def compare_play(self, ctx, *playlists):
         """
         Compares the contents of two playlists
-        :arg playlist1: The link for the first playlist
-        :arg playlist2: The link for the second playlist
+        :arg playlists: The links for the playlists
         """
-        playlists = [playlist1, playlist2]
         playlists = [computations.uri_to_id(computations.link_to_uri(playlist)) for playlist in playlists]
 
         info = await computations.playlist_overlap(str(ctx.author.id), *playlists)
@@ -245,8 +243,6 @@ class SpotifyAPI(commands.Cog):
         # Send each separate message
         for message in messages:
             await ctx.send(message)
-
-
 
     @commands.command(name='sleep')
     async def sleep_timer(self, ctx, sleep_time):
