@@ -162,8 +162,8 @@ async def sleep_timer(user: str, time: int) -> dict:
     # Pause the playback
     ret = sp.pause_playback()
     if ret != "Successful":
-        return {"Info": [], "Error": ret}
-    return {"Info": "Paused music", "Error": 0}
+        return {"info": [], "Error": ret}
+    return {"info": "Paused music", "Error": 0}
 
 
 def get_recommendations(user: str, songs: int, source: list) -> dict:
