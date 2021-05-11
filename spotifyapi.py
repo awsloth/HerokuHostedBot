@@ -447,10 +447,14 @@ class APIReq:
             if args[i] is not None:
                 params.update({arg_names[i]: args[i]})
 
-        # Create the request and grab the returned json file
-        r = requests.get(url, params=params, headers=self.headers).json()
+        # Create the request
+        r = requests.get(url, params=params, headers=self.headers)
 
-        return r
+        # If the request failed, return the header for timeout time
+        if 'items' not in r.json():
+            return {'time_out': r.headers}
+
+        return r.json()
 
     @type_check
     def top_tracks(self, time_range: str = None, limit: int = None,
