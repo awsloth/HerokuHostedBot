@@ -206,9 +206,9 @@ async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
         user_songs.append(songs)
 
     if accuracy == "exact":
-        return {'info': intersection(user_songs), 'Error': 0}
+        return intersection(user_songs)
 
-    return {'info': ordered_songs(user_songs), 'Error': 0}
+    return ordered_songs(user_songs)
 
 
 def intersection(song_list: list) -> dict:

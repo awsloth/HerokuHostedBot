@@ -259,7 +259,8 @@ def create_playlist(user: str, tracks: list, name: str) -> dict:
 
     track_uris = [track['uri'] for track in tracks]
 
-    sp.add_items_playlist(playlist_id, track_uris)
+    for i in range(len(track_uris)//100+1):
+        sp.add_items_playlist(playlist_id, track_uris[i*100:(i+1)*100])
 
     return {"info": "Request successful", "Error": 0}
 
@@ -340,8 +341,8 @@ async def get_playlist_songs(user: str, playlist_id: str) -> dict:
         # Add the songs to the tracks list
         for future in futures:
             songs = await future
-            if 'items' not in songs:
-                return {'info': tracks, 'Error': songs}
+            if 'time_out' in songs:
+                return {'info': [], 'Error': songs['time_out']}
             tracks += songs['items']
 
     return {'info': tracks, 'Error': 0}

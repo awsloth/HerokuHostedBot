@@ -452,7 +452,8 @@ class APIReq:
 
         # If the request failed, return the header for timeout time
         if 'items' not in r.json():
-            return {'time_out': r.headers['retry-after']}
+            return {'time_out': r.headers['retry-after'],
+                    'params': [playlist_id, limit, offset]}
 
         return r.json()
 

@@ -229,7 +229,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "queue":
             # add tracks to queue
             result = spotifyauth.add_to_queue(str(ctx.author.id),
-                                              info['info']['tracks'])
+                                              info['info'])
 
             # If an error occurred adding to queue, send the error
             if result['Error'] != 0:
@@ -242,7 +242,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
             result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 info['info']['tracks'], 'userOverlapPlaylist')
+                                                 info['info'], 'userOverlapPlaylist')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:
@@ -285,7 +285,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "queue":
             # add tracks to queue
             result = spotifyauth.add_to_queue(str(ctx.author.id),
-                                              info['info']['tracks'])
+                                              [track[1] for track in info['info']['songs']])
 
             # If an error occurred adding to queue, send the error
             if result['Error'] != 0:
@@ -298,7 +298,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
             result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 info['info']['tracks'], 'playlistOverlapSongs')
+                                                 [track[1] for track in info['info']['songs']], 'playlistOverlapSongs')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:
