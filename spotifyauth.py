@@ -365,7 +365,7 @@ async def get_artists(user: str, playlist: str) -> dict:
 
     # Get all the artists for the tracks
     artists = []
-    for track in tracks:
+    for track in tracks['info']:
         artists += [artist['name'] for artist in track['track']['artists']]
 
     # Convert the list to a dictionary with counts of each artist
