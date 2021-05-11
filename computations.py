@@ -193,7 +193,10 @@ async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
     """
     tracks = []
     for playlist_id in playlist_ids:
-        tracks.append(await spotifyauth.get_playlist_songs(user, playlist_id))
+        playlist_songs = await spotifyauth.get_playlist_songs(user, playlist_id)
+        if playlist_songs['Error'] != 0:
+            return {'info': [], 'Error': playlist_songs['Error']}
+        tracks.append(playlist_songs)
 
     user_songs = []
     for play_tracks in tracks:
@@ -203,9 +206,9 @@ async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
         user_songs.append(songs)
 
     if accuracy == "exact":
-        return intersection(user_songs)
+        return {'info': intersection(user_songs), 'Error': 0}
 
-    return ordered_songs(user_songs)
+    return {'info': ordered_songs(user_songs), 'Error': 0}
 
 
 def intersection(song_list: list) -> dict:

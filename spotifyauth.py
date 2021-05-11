@@ -307,7 +307,7 @@ async def genres(user: str, artists: list) -> list:
     return list(set(genre_list))
 
 
-async def get_playlist_songs(user: str, playlist_id: str) -> list:
+async def get_playlist_songs(user: str, playlist_id: str) -> dict:
     """
     :arg user: The user to authenticate
     :arg playlist_id: The id of the playlist to get songs for
@@ -340,9 +340,11 @@ async def get_playlist_songs(user: str, playlist_id: str) -> list:
         # Add the songs to the tracks list
         for future in futures:
             songs = await future
+            if 'items' not in songs:
+                return {'info': tracks, 'Error': songs}
             tracks += songs['items']
 
-    return tracks
+    return {'info': tracks, 'Error': 0}
 
 
 async def get_artists(user: str, playlist: str) -> dict:
