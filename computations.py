@@ -184,10 +184,10 @@ async def show_overlap(*users: list[str]) -> dict:
     return overlap
 
 
-async def playlist_overlap(user: str, type: str, *playlist_ids) -> dict:
+async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
     """
     :arg user: The user to authenticate
-    :arg type: The type of intersection to find
+    :arg accuracy: The type of intersection to find
     :arg playlist_ids: The ids of the playlists to compare
     Finds the intersections between the playlists
     """
@@ -198,12 +198,11 @@ async def playlist_overlap(user: str, type: str, *playlist_ids) -> dict:
     user_songs = []
     for play_tracks in tracks:
         track_ids = [x['track']['id'] for x in play_tracks if not x['track']['is_local']]
-        track_names = [x['track']['name'] for x in play_tracks if not x['track']['is_local']]
-        track_artists = [x['track']['artists'][0]['name'] for x in play_tracks if not x['track']['is_local']]
-        songs = dict(zip(track_ids, zip(track_names, track_artists)))
+        track_dict = [x['track'] for x in play_tracks if not x['track']['is_local']]
+        songs = dict(zip(track_ids, track_dict))
         user_songs.append(songs)
 
-    if type == "exact":
+    if accuracy == "exact":
         return intersection(user_songs)
 
     return ordered_songs(user_songs)
@@ -216,9 +215,9 @@ def intersection(song_list: list) -> dict:
     """
 
     # Find the set intersection between all the user's songs
-    songs = set(song_list[0])
+    songs = set(song_list[0].keys())
     for i in range(1, len(song_list)):
-        songs = set(song_list[i]) & songs
+        songs = set(song_list[i].keys()) & songs
 
     # Find the total number of songs
     total_songs = sum(map(len, [song_set for song_set in song_list]))
@@ -229,8 +228,7 @@ def intersection(song_list: list) -> dict:
     # Find song names with id dict
     id_dict = {}
     for song_dict in song_list:
-        for key in song_dict:
-            id_dict.update({key: song_dict[key]})
+        id_dict.update(song_dict)
 
     # Get all the names from the dict
     song_details = [id_dict[song_id] for song_id in songs]
@@ -250,7 +248,9 @@ def ordered_songs(song_list: list) -> dict:
         songs += song_set
 
     song_counts = collections.Counter(songs)
-    filtered_songs = [[song_counts[song], song] for song in song_counts.keys() if song_counts[song] > len(song_list)//2]
+
+    num_cutoff = max(len(song_list)//2, 2)
+    filtered_songs = [[song_counts[song], song] for song in song_counts.keys() if song_counts[song] >= num_cutoff]
 
     song_dict = {}
     for sub_dict in song_list:

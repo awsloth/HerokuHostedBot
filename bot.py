@@ -73,6 +73,19 @@ async def auth_scope(ctx: discord.ext.commands.Context, command: str, req_scope:
         return False
 
 
+async def send_as_message(place, info_list, pattern):
+    """
+    :arg place: ctx or ctx.author, so dm or where the original message was
+    :arg info_list: The list of information
+    :arg pattern: The pattern of how the message is formed
+    Sends the info as a message
+    """
+    messages = computations.form_message([pattern.format(*items) for items in info_list])
+
+    for message in messages:
+        await place.send(message)
+
+
 # AccountCommands class, holds commands dealing with spotify accounts
 class AccountCommands(commands.Cog):
     """
@@ -184,7 +197,7 @@ class SpotifyAPI(commands.Cog):
     The commands that involve you signing into your account
     """
     @commands.command(name='compare')
-    async def compare_songs(self, ctx,
+    async def compare_songs(self, ctx, output,
                             *users: typing.Union[discord.Member, str]):
         """
         Compares the music taste of the specified users
@@ -203,57 +216,97 @@ class SpotifyAPI(commands.Cog):
         # Get the overlap, overlap percentage and songs
         overlap_percentage = info['info']['percentage']
         overlap = info['info']['total']
-        song_details = info['info']['songs']
 
-        # Show the user the overlap and songs
-        await ctx.send(f"You have a {overlap_percentage}% overlap, or {overlap} songs")
+        track_info = [[tracks['name'], tracks['artists'][0]['name']] for tracks in info['info']['songs']]
 
-        # Form inline code message to show song names and artists
-        messages = computations.form_message([f"{name} by {artist}" for name, artist in song_details])
+        # Send the songs by the method specified by the user
+        if output.lower() == "chat":
+            # Show the user the overlap and songs
+            await ctx.send(f"You have a {overlap_percentage}% overlap, or {overlap} songs")
 
-        # Send each separate message
-        for message in messages:
-            await ctx.send(message)
+            await send_as_message(ctx, track_info, "{} by {}")
+
+        elif output.lower() == "queue":
+            # add tracks to queue
+            result = spotifyauth.add_to_queue(str(ctx.author.id),
+                                              info['info']['tracks'])
+
+            # If an error occurred adding to queue, send the error
+            if result['Error'] != 0:
+                await ctx.send(result['Error'])
+                return -1
+
+            # Show the message showing the successful adding
+            await ctx.send(result['info'])
+
+        elif output.lower() == "playlist":
+            # Create/add to a playlist with recommended tracks
+            result = spotifyauth.create_playlist(str(ctx.author.id),
+                                                 info['info']['tracks'], 'userOverlapPlaylist')
+
+            # If an error occurred creating a playlist, send the error
+            if result['Error'] != 0:
+                await ctx.send(result['Error'])
+                return -1
+
+            # Show the message showing the successful adding
+            await ctx.send(result['info'])
 
     @commands.command(name='comparePlay')
-    async def compare_play(self, ctx, type, *playlists):
+    async def compare_play(self, ctx, accuracy, output, *playlists):
         """
         Compares the contents of two playlists
-        :arg type: The type of match
+        :arg accuracy: The accuracy of match
+        :arg output: Where to output:
+                    'chat' -  sends the songs in chat
+                    'queue' - Adds the songs to the user's spotify queue
+                    'playlist' - Creates or adds to an
+                                    existing playlist holding the songs
         :arg playlists: The links for the playlists
         """
-        if type not in ['exact', 'rough']:
-            await ctx.send(f"type {type} not valid try 'exact' or 'rough'")
+        if accuracy not in ['exact', 'rough']:
+            await ctx.send(f"accuracy {accuracy} not valid try 'exact' or 'rough'")
             return -1
 
         playlists = [computations.uri_to_id(computations.link_to_uri(playlist)) for playlist in playlists]
 
-        info = await computations.playlist_overlap(str(ctx.author.id), type, *playlists)
+        info = await computations.playlist_overlap(str(ctx.author.id), accuracy, *playlists)
 
         if info['Error'] != 0:
             await ctx.send(info['Error'])
             return -1
 
-        if type == "exact":
-            # Get the overlap, overlap percentage and songs
-            overlap_percentage = info['info']['percentage']
-            overlap = info['info']['total']
-            song_details = info['info']['songs']
+        track_info = [[tracks['name'], tracks['artists'][0]['name'], nums] for nums, tracks in info['info']['songs']]
 
-            # Show the user the overlap and songs
-            await ctx.send(f"The playlists have a {overlap_percentage}% overlap, or {overlap} songs")
+        # Send the songs by the method specified by the user
+        if output.lower() == "chat":
+            await send_as_message(ctx, track_info, "{} by {} with {} matches")
 
-            # Form inline code message to show song names and artists
-            messages = computations.form_message([f"{name} by {artist}" for name, artist in song_details])
-        else:
-            song_details = info['info']['songs']
+        elif output.lower() == "queue":
+            # add tracks to queue
+            result = spotifyauth.add_to_queue(str(ctx.author.id),
+                                              info['info']['tracks'])
 
-            # Form inline code message to show song names and artists
-            messages = computations.form_message([f"{details[0]} by {details[1]} with {num} matches" for num, details in song_details])
+            # If an error occurred adding to queue, send the error
+            if result['Error'] != 0:
+                await ctx.send(result['Error'])
+                return -1
 
-        # Send each separate message
-        for message in messages:
-            await ctx.send(message)
+            # Show the message showing the successful adding
+            await ctx.send(result['info'])
+
+        elif output.lower() == "playlist":
+            # Create/add to a playlist with recommended tracks
+            result = spotifyauth.create_playlist(str(ctx.author.id),
+                                                 info['info']['tracks'], 'playlistOverlapSongs')
+
+            # If an error occurred creating a playlist, send the error
+            if result['Error'] != 0:
+                await ctx.send(result['Error'])
+                return -1
+
+            # Show the message showing the successful adding
+            await ctx.send(result['info'])
 
     @commands.command(name='sleep')
     async def sleep_timer(self, ctx, sleep_time):
@@ -332,7 +385,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
             result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 recs['info']['tracks'])
+                                                 recs['info']['tracks'], 'discordRecs')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:

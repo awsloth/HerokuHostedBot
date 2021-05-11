@@ -120,9 +120,8 @@ re-authenticate using the `+setup` command please```'''}
 
     # Get all the songs ids and get all the unique songs
     track_ids = [x['track']['id'] for x in tracks if not x['track']['is_local']]
-    track_names = [x['track']['name'] for x in tracks if not x['track']['is_local']]
-    track_artists = [x['track']['artists'][0]['name'] for x in tracks if not x['track']['is_local']]
-    songs = dict(zip(track_ids, zip(track_names, track_artists)))
+    track_dict = [x['track'] for x in tracks if not x['track']['is_local']]
+    songs = dict(zip(track_ids, track_dict))
 
     return {"info": songs, "Error": 0}
 
@@ -215,25 +214,28 @@ def add_to_queue(user: str, tracks: list) -> dict:
     Adds given tracks to the user's queue
     """
     scope = "user-modify-playback-state"
-    if not computations.check_user(user, scope):
-        # Get the auth code
-        code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
-                               read_func=computations.get_user, update_func=computations.update_user,
-                               check_func=computations.check_user_exist)
-        # Initiate the APIReq class to interact with the api
-        sp = spotifyapi.APIReq(code)
-
-        for track in tracks:
-            sp.add_track_playback(track['uri'])
-
-        return {"info": "Request successful", "Error": 0}
-    else:
+    if computations.check_user(user, scope):
         return {"info": [], "Error": "Error, user not authenticated for request, run `+setup all`"}
 
+    # Get the auth code
+    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
 
-def create_playlist(user: str, tracks: list) -> dict:
+    # Initiate the APIReq class to interact with the api
+    sp = spotifyapi.APIReq(code)
+
+    for track in tracks:
+        sp.add_track_playback(track['uri'])
+
+    return {"info": "Request successful", "Error": 0}
+
+
+def create_playlist(user: str, tracks: list, name: str) -> dict:
     """
+    :arg user: The name of the user to add the playlist to
     :arg tracks: A list of track instances from spotify api
+    :arg name: The name of the playlist
     :return str: Whether the request worked or not
     Adds given tracks to a playlist for the user
     """
@@ -253,7 +255,7 @@ def create_playlist(user: str, tracks: list) -> dict:
     user_id = sp.get_user()['id']
 
     # Create playlist
-    playlist_id = sp.create_playlist(user_id, 'DiscordRecs')['id']
+    playlist_id = sp.create_playlist(user_id, name)['id']
 
     track_uris = [track['uri'] for track in tracks]
 
