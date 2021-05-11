@@ -252,7 +252,7 @@ def ordered_songs(song_list: list) -> dict:
 
     song_counts = collections.Counter(songs)
 
-    num_cutoff = max(len(song_list)//2, 2)
+    num_cutoff = max(len(song_list)/2, 2)
     filtered_songs = [[song_counts[song], song] for song in song_counts.keys() if song_counts[song] >= num_cutoff]
 
     song_dict = {}
