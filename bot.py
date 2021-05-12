@@ -2,6 +2,7 @@
 import os
 import asyncio
 import time
+import datetime
 import typing
 
 # Import 3rd party libraries
@@ -309,17 +310,28 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(result['info'])
 
     @commands.command(name='sleep')
-    async def sleep_timer(self, ctx, sleep_time):
+    async def sleep_timer(self, ctx, sleep_time, time_type=None):
         """
         Stops music playing after given time,
         but waits until the end of the track
         :arg sleep_time: Time to wait before sleeping (HH:MM:SS)
+        :arg time_type: The type of the time,
+                            "actual" - The actual time
+                            "wait" - Time to wait
         """
         # Split up the time into hours, minutes and secs
         hours, minutes, seconds = map(int, sleep_time.split(":"))
 
-        # Calculate the total time in seconds
-        total_time_secs = hours*3600+minutes*60+seconds
+        if time_type == "wait" or time_type is None:
+            # Calculate the total time in seconds
+            total_time_secs = hours*3600+minutes*60+seconds
+        else:
+            today = datetime.datetime.today()
+            year = today.year
+            month = today.month
+            day = today.day
+            time_secs = datetime.datetime(year, month, day, hours, minutes, seconds).timestamp()
+            total_time_secs = today.timestamp()-time_secs
 
         await ctx.send("Waiting to sleep")
         result = await spotifyauth.sleep_timer(str(ctx.author.id),
