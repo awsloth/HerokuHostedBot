@@ -248,7 +248,7 @@ def ordered_songs(song_list: list) -> dict:
     """
     songs = []
     for song_set in song_list:
-        songs += song_set
+        songs += list(set(song_set))
 
     song_counts = collections.Counter(songs)
 

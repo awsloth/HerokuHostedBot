@@ -65,7 +65,7 @@ def get_url(scope: str) -> list[str, object]:
 async def get_user_songs(user: str) -> dict:
     """
     :arg user: The id of the user to save the songs for (Required)
-    :return None:
+    :return dict: A dict containing the information about the songs
     Sets up the users cache and saves all the
     unique songs in their playlists
     """
@@ -95,7 +95,6 @@ re-authenticate using the `+setup all` command please```'''}
     # Get the playlist ids and the number of tracks
     # in each playlist
     playlist_ids = map(lambda x: x['id'], playlists)
-    track_nums = map(lambda x: x['tracks']['total'], playlists)
 
     # Define tracks list
     tracks = []
@@ -103,20 +102,11 @@ re-authenticate using the `+setup all` command please```'''}
     # Get the loop for asyncio
     loop = asyncio.get_event_loop()
 
-    # Create a threading executor
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        # For each playlist
-        for playlist_id, length in zip(playlist_ids, track_nums):
-            # Get the tracks in the playlist
-            futures = []
-            for i in range(length // 100 + (length % 100 > 0)):
-                futures.append(loop.run_in_executor(executor,
-                                                    sp.get_tracks_playlist, playlist_id, 100, i*100))
-
-            # Add the songs to the tracks list
-            for future in futures:
-                songs = await future
-                tracks += songs['items']
+    for play_id in playlist_ids:
+        play_tracks = await get_playlist_songs(user, play_id, True)
+        if play_tracks['Error'] != 0:
+            return play_tracks
+        tracks += play_tracks['info']
 
     # Get all the songs ids and get all the unique songs
     track_ids = [x['track']['id'] for x in tracks if not x['track']['is_local']]
@@ -308,14 +298,24 @@ async def genres(user: str, artists: list) -> list:
     return list(set(genre_list))
 
 
-async def get_playlist_songs(user: str, playlist_id: str) -> dict:
+async def get_playlist_songs(user: str, playlist_id: str, private: bool) -> dict:
     """
     :arg user: The user to authenticate
     :arg playlist_id: The id of the playlist to get songs for
+    :arg private: Whether the playlist is private or not
     Gets all the songs in a playlist
     """
+    scope = None
+    if private:
+        scope = "playlist-read-private"
+
+    if computations.check_user(user, scope if scope is not None else ""):
+        return {"info": [],
+                "Error": f'''```User has wrong scope
+re-authenticate using the `+setup all` command please```'''}
+
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
+    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
                            read_func=computations.get_user, update_func=computations.update_user,
                            check_func=computations.check_user_exist)
 
