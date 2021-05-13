@@ -331,7 +331,7 @@ class SpotifyAPI(commands.Cog):
             month = today.month
             day = today.day
             time_secs = datetime.datetime(year, month, day, hours, minutes, seconds).timestamp()
-            total_time_secs = today.timestamp()-time_secs
+            total_time_secs = time_secs-today.timestamp()
 
         await ctx.send("Waiting to sleep")
         result = await spotifyauth.sleep_timer(str(ctx.author.id),
