@@ -193,7 +193,7 @@ async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
     """
     tracks = []
     for playlist_id in playlist_ids:
-        playlist_songs = await spotifyauth.get_playlist_songs(user, playlist_id)
+        playlist_songs = await spotifyauth.get_playlist_songs(user, playlist_id, False)
         if playlist_songs['Error'] != 0:
             return {'info': [], 'Error': playlist_songs['Error']}
         tracks.append(playlist_songs['info'])

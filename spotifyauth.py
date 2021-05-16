@@ -1,6 +1,7 @@
 # Import standard libraries
 import os
 import asyncio
+import math
 import concurrent.futures
 import collections
 
@@ -89,7 +90,7 @@ re-authenticate using the `+setup all` command please```'''}
 
     # Get every playlist from the api
     playlists = []
-    for i in range(total // 50 + (total % 50 > 0)):
+    for i in range(math.ceil(total/50)):
         playlists += sp.get_users_playlists(50, i*50)['items']
 
     # Get the playlist ids and the number of tracks
@@ -98,9 +99,6 @@ re-authenticate using the `+setup all` command please```'''}
 
     # Define tracks list
     tracks = []
-
-    # Get the loop for asyncio
-    loop = asyncio.get_event_loop()
 
     for play_id in playlist_ids:
         play_tracks = await get_playlist_songs(user, play_id, True)
@@ -249,7 +247,7 @@ def create_playlist(user: str, tracks: list, name: str) -> dict:
 
     track_uris = [track['uri'] for track in tracks]
 
-    for i in range(len(track_uris)//100+1):
+    for i in range(math.ceil(len(track_uris)/100)):
         sp.add_items_playlist(playlist_id, track_uris[i*100:(i+1)*100])
 
     return {"info": "Request successful", "Error": 0}
@@ -305,19 +303,24 @@ async def get_playlist_songs(user: str, playlist_id: str, private: bool) -> dict
     :arg private: Whether the playlist is private or not
     Gets all the songs in a playlist
     """
-    scope = None
+    scope = ""
     if private:
         scope = "playlist-read-private"
 
-    if computations.check_user(user, scope if scope is not None else ""):
+    if computations.check_user(user, scope):
         return {"info": [],
                 "Error": f'''```User has wrong scope
 re-authenticate using the `+setup all` command please```'''}
 
     # Get the auth code
-    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
-                           read_func=computations.get_user, update_func=computations.update_user,
-                           check_func=computations.check_user_exist)
+    if scope != "":
+        code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                               read_func=computations.get_user, update_func=computations.update_user,
+                               check_func=computations.check_user_exist)
+    else:
+        code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
+                               read_func=computations.get_user, update_func=computations.update_user,
+                               check_func=computations.check_user_exist)
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
@@ -325,25 +328,23 @@ re-authenticate using the `+setup all` command please```'''}
     # Get the total number of playlists the user has
     total = sp.get_tracks_playlist(playlist_id, 1)['total']
 
-    # Define tracks list
+    # Create a list of requests to be made
+    requests = [[100, i*100] for i in range(math.ceil(total/100))]
+
+    # Create list of requests in chunks of 50
+    request_chunks = [requests[i*50: (i+1)*50] for i in range(math.ceil(len(requests)/50))]
+
     tracks = []
 
-    # Get the loop for asyncio
     loop = asyncio.get_event_loop()
-
-    # Create a threading executor
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = []
-        for i in range(total // 100 + (total % 100 > 0)):
-            futures.append(loop.run_in_executor(executor,
-                                                sp.get_tracks_playlist, playlist_id, 100, i * 100))
+        for request_set in request_chunks:
+            songs, wait_time = await get_tracks(request_set, loop, executor, sp, playlist_id)
+            while wait_time is not None:
+                await asyncio.sleep(int(wait_time))
+                songs, wait_time = await get_tracks(request_set, loop, executor, sp, playlist_id)
 
-        # Add the songs to the tracks list
-        for future in futures:
-            songs = await future
-            if 'time_out' in songs:
-                return {'info': [], 'Error': songs['time_out']}
-            tracks += songs['items']
+            tracks += songs
 
     return {'info': tracks, 'Error': 0}
 
@@ -361,7 +362,7 @@ async def get_artists(user: str, playlist: str) -> dict:
 
     playlist_id = computations.uri_to_id(playlist)
 
-    tracks = await get_playlist_songs(user, playlist_id)
+    tracks = await get_playlist_songs(user, playlist_id, False)
 
     # Get all the artists for the tracks
     artists = []
@@ -405,3 +406,23 @@ def cur_song(user: str) -> dict:
 
     # Return the information
     return {"info": search, "Error": 0}
+
+
+async def get_tracks(request_set, loop, executor, sp, playlist_id) -> list:
+    fetched_tracks = []
+    futures = []
+    wait_time = None
+    for request in request_set:
+        futures.append(loop.run_in_executor(executor,
+                                            sp.get_tracks_playlist, playlist_id,
+                                            request[0], request[1]))
+
+    for future in futures:
+        songs = await future
+        if 'time_out' in songs:
+            # Failed request
+            wait_time = songs['time_out']
+        else:
+            fetched_tracks += songs['items']
+
+    return [fetched_tracks, wait_time]
