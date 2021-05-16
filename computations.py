@@ -259,7 +259,8 @@ def ordered_songs(song_list: list) -> dict:
     for sub_dict in song_list:
         song_dict.update(sub_dict)
 
-    song_info = [[song[0], song_dict[song[1]]] for song in filtered_songs]
+    song_info = sorted([[song_count, song_dict[song]] for song_count, song in filtered_songs],
+                       key=lambda x: x[0], reverse=True)
 
     return {"info": {"songs": song_info}, "Error": 0}
 

@@ -277,11 +277,17 @@ class SpotifyAPI(commands.Cog):
             await ctx.send(info['Error'])
             return -1
 
-        track_info = [[tracks['name'], tracks['artists'][0]['name'], nums] for nums, tracks in info['info']['songs']]
+        if accuracy == "rough":
+            track_info = [[tracks['name'], tracks['artists'][0]['name'], nums] for nums, tracks in info['info']['songs']]
+        else:
+            track_info = [[track['name'], track['artists'][0]['name']] for track in info['info']['songs']]
 
         # Send the songs by the method specified by the user
         if output.lower() == "chat":
-            await send_as_message(ctx, track_info, "{} by {} with {} matches")
+            if accuracy == "rough":
+                await send_as_message(ctx, track_info, "{} by {} with {} matches")
+            else:
+                await send_as_message(ctx, track_info, "{} by {}")
 
         elif output.lower() == "queue":
             # add tracks to queue
