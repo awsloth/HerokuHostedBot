@@ -94,14 +94,39 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     if len(lyrics_div) > 0:
         # Find the child p element
         lyrics = lyrics_div[0].find("p")
+
         # Store the lines with <br/> cleared and separated by \n chars
         lines = lyrics.text.split("\n")
-
     else:
         # Find the lyrics div
-        div = soup.find("div", {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
-        tag_text = [child.text if not isinstance(child, bs4.NavigableString) else child for child in div.children]
-        lines = list(filter(lambda x: x != '', tag_text))
+        lines = []
+        divs = soup.find_all("div", {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
+        for div in divs:
+            tag_text = []
+            for child in div.children:
+                tag_text += get_text([child])
+            lines += list(filter(lambda x: x != '', tag_text))
+
+        # Insert \n before square brackets
+        for i in range(len(lines)):
+            if lines[i][0] == "[":
+                lines[i] = "\n"+lines[i]
 
     # Return the results
     return {"info": lines, "Error": 0}
+
+
+def get_text(children: list) -> list:
+    """
+    :arg child: A child of the div to find the text of
+    :return list: A list of strings
+    Gets all text from a child element
+    """
+    text = []
+    for child in children:
+        if isinstance(child, bs4.NavigableString):
+            text.append(child)
+        elif isinstance(child, bs4.Tag):
+            text += get_text(child.children)
+
+    return text
