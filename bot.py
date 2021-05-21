@@ -278,7 +278,8 @@ class SpotifyAPI(commands.Cog):
             return -1
 
         if accuracy == "rough":
-            track_info = [[tracks['name'], tracks['artists'][0]['name'], nums] for nums, tracks in info['info']['songs']]
+            track_info = [[tracks['name'], tracks['artists'][0]['name'], nums] for nums,
+                          tracks in info['info']['songs']]
         else:
             track_info = [[track['name'], track['artists'][0]['name']] for track in info['info']['songs']]
 

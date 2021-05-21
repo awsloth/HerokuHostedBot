@@ -17,9 +17,10 @@ redirect_uri = "http://localhost:8080/"
 
 async def setup_user(ctx, bot, scope: str) -> dict:
     """
-    :arg ctx: A discord context object
-    :arg bot: An instance of discord bot class
-    :arg scope: The scope to set up for
+    :arg ctx: A discord context object (Required)
+    :arg bot: An instance of discord bot class (Required)
+    :arg scope: The scope to set up for (Required)
+    :return dict: A dict containing tokens and info about the oauth request
     Sets up a user for the specified scope
     """
     # Get the url and instance of oauth
@@ -49,7 +50,7 @@ async def setup_user(ctx, bot, scope: str) -> dict:
 
 def get_url(scope: str) -> list[str, object]:
     """
-    :arg scope: The scope to authorise for
+    :arg scope: The scope to authorise for (Required)
     :return str: Returns the url
     Gets the authentication url for the user to proceed with OAuth
     """
@@ -116,8 +117,9 @@ re-authenticate using the `+setup all` command please```'''}
 
 async def sleep_timer(user: str, time: int) -> dict:
     """
-    :arg user: The user to create a sleep time for
+    :arg user: The user to create a sleep time for (Required)
     :arg time: The time for the tracks to stop after in seconds (Required)
+    :return dict: Info about the request made
     Stops playback after the specified time
     """
     # Set the scope needed for this function
@@ -155,9 +157,10 @@ async def sleep_timer(user: str, time: int) -> dict:
 
 def get_recommendations(user: str, songs: int, source: list) -> dict:
     """
-    :arg user: The user to get recommendations for
-    :arg songs: The number of songs to get
-    :arg source: The source for the seed, artists, tracks, playlist
+    :arg user: The user to get recommendations for (Required)
+    :arg songs: The number of songs to get (Required)
+    :arg source: The source for the seed, artists, tracks, playlist (Required)
+    :return dict: Recommendations based upon the seed
     Return recommendations for the user
     """
     # Get the auth code
@@ -197,7 +200,7 @@ def get_recommendations(user: str, songs: int, source: list) -> dict:
 
 def add_to_queue(user: str, tracks: list) -> dict:
     """
-    :arg tracks: A list of track instances from spotify api
+    :arg tracks: A list of track instances from spotify api (Required)
     :return str: Whether the request worked or not
     Adds given tracks to the user's queue
     """
@@ -221,9 +224,9 @@ def add_to_queue(user: str, tracks: list) -> dict:
 
 def create_playlist(user: str, tracks: list, name: str) -> dict:
     """
-    :arg user: The name of the user to add the playlist to
-    :arg tracks: A list of track instances from spotify api
-    :arg name: The name of the playlist
+    :arg user: The name of the user to add the playlist to (Required)
+    :arg tracks: A list of track instances from spotify api (Required)
+    :arg name: The name of the playlist (Required)
     :return str: Whether the request worked or not
     Adds given tracks to a playlist for the user
     """
@@ -255,7 +258,8 @@ def create_playlist(user: str, tracks: list, name: str) -> dict:
 
 def top_ten(user: str, time_range: str) -> dict:
     """
-    :arg user: The user to get the songs of
+    :arg user: The user to get the songs of (Required)
+    :return dict: The top 10 songs
     Gets the top 10 tracks for the user
     """
 
@@ -278,8 +282,9 @@ def top_ten(user: str, time_range: str) -> dict:
 
 async def genres(user: str, artists: list) -> list:
     """
-    :arg user: The id of the user
-    :arg artists: List of artists to get the genre of
+    :arg user: The id of the user (Required)
+    :arg artists: List of artists to get the genre of (Required)
+    :return list: The list of genres
     Gets the genres of a given list of artist
     """
     # Get the auth code
@@ -298,9 +303,10 @@ async def genres(user: str, artists: list) -> list:
 
 async def get_playlist_songs(user: str, playlist_id: str, private: bool) -> dict:
     """
-    :arg user: The user to authenticate
-    :arg playlist_id: The id of the playlist to get songs for
-    :arg private: Whether the playlist is private or not
+    :arg user: The user to authenticate (Required)
+    :arg playlist_id: The id of the playlist to get songs for (Required)
+    :arg private: Whether the playlist is private or not (Required)
+    :return dict: The dict of songs in the playlist
     Gets all the songs in a playlist
     """
     scope = ""
@@ -351,8 +357,10 @@ re-authenticate using the `+setup all` command please```'''}
 
 async def get_artists(user: str, playlist: str) -> dict:
     """
-    :arg user: The user id
-    :arg playlist: The id of the playlist to look at
+    :arg user: The user id (Required)
+    :arg playlist: The id of the playlist to look at (Required)
+    :return dict: Info about the artists
+    Gets the artists in a playlist
     """
     # If the user isn't in the database send an error
     if not computations.check_user_exist(user):
@@ -382,7 +390,9 @@ async def get_artists(user: str, playlist: str) -> dict:
 
 def cur_song(user: str) -> dict:
     """
-    :arg user: The id of the user to get the current song of
+    :arg user: The id of the user to get the current song of (Required)
+    :return dict: Info about the current song
+    Gets the current song the user is playing
     """
     # If the user isn't in the database send an error
     if not computations.check_user_exist(user):
@@ -408,7 +418,18 @@ def cur_song(user: str) -> dict:
     return {"info": search, "Error": 0}
 
 
-async def get_tracks(request_set, loop, executor, sp, playlist_id) -> list:
+async def get_tracks(request_set: list, loop, executor,
+                     sp: spotifyapi.APIReq, playlist_id: str) -> list:
+    """
+    :arg request_set: The set of requests (Required)
+    :arg loop: The asyncio loop (Required)
+    :arg executor: The executor from concurrent.futures to run the requests in (Required)
+    :arg sp: Instance of the spotify api class to make requests to (Required)
+    :arg playlist_id: The id of the playlist to get (Required)
+    :return list: A list of the songs returned by the requests
+    Makes requests with asyncio, with pauses when a timeout error
+    occurs so that all songs are fetched
+    """
     fetched_tracks = []
     futures = []
     wait_time = None

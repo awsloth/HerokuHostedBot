@@ -13,7 +13,7 @@ URL = os.getenv('DATABASE_URL')
 
 def check_user_exist(user: str) -> bool:
     """
-    :arg user: The user to check
+    :arg user: The user to check (Required)
     :return bool: Whether the user exists or not
     Checks whether any information is stored about the user in the database
     """
@@ -39,8 +39,8 @@ def check_user_exist(user: str) -> bool:
 
 def check_user(user: str, scope: str) -> bool:
     """
-    :arg user: The user to check
-    :arg scope: The scope to check
+    :arg user: The user to check (Required)
+    :arg scope: The scope to check (Required)
     :return bool: Whether the user is new or not
     Returns whether the user is new or not/needs an updated scope
     """
@@ -71,13 +71,14 @@ WHERE personid = '{user}';""")
     return False
 
 
-def save_user(user: str, token: str, refresh: str, time: float, scope: str):
+def save_user(user: str, token: str, refresh: str, time: float, scope: str) -> None:
     """
-    :arg user: The user to save details about
-    :arg token: The auth token for the user
-    :arg refresh: The refresh token for the user
-    :arg time: Time the token was received
-    :arg scope: The scope of the token
+    :arg user: The user to save details about (Required)
+    :arg token: The auth token for the user (Required)
+    :arg refresh: The refresh token for the user (Required)
+    :arg time: Time the token was received (Required)
+    :arg scope: The scope of the token (Required)
+    :return None:
     Saves details about the user
     """
     # Open a connection to the database
@@ -95,9 +96,10 @@ VALUES ('{user}', '{token}', '{refresh}', {time}, '{scope}');""")
     con.close()
 
 
-def delete_user(user: str):
+def delete_user(user: str) -> None:
     """
-    :arg user: The user to delete the data about
+    :arg user: The user to delete the data about (Required)
+    :return None:
     Deletes any stored information about the user
     """
     # Open a connection to the database
@@ -116,7 +118,7 @@ def delete_user(user: str):
 
 def get_user(user: str) -> list:
     """
-    :arg user: The user to get information about
+    :arg user: The user to get information about (Required)
     :return list: A list containing the information
     Grabs the information about the user from the database
     """
@@ -137,13 +139,14 @@ WHERE personid = '{user}';""")
     return result[1:]
 
 
-def update_user(user: str, token: str, refresh: str, time: float, scope: str):
+def update_user(user: str, token: str, refresh: str, time: float, scope: str) -> None:
     """
-    :arg user: The user to update details about
-    :arg token: The auth token for the user
-    :arg refresh: The refresh token for the user
-    :arg time: Time the token was received
-    :arg scope: The scope of the token
+    :arg user: The user to update details about (Required)
+    :arg token: The auth token for the user (Required)
+    :arg refresh: The refresh token for the user (Required)
+    :arg time: Time the token was received (Required)
+    :arg scope: The scope of the token (Required)
+    :return None:
     Updates details about the user
     """
     # Open a connection to the database
@@ -164,9 +167,9 @@ WHERE personid = '{user}';""")
 
 async def show_overlap(*users: list[str]) -> dict:
     """
-    :arg users: The id of users to compare
+    :arg users: The id of users to compare (Required)
     :return list: Contains the songs that overlap,
-    the total songs that overlap and the percent overlap
+    The total songs that overlap and the percent overlap
     Gives information about the overlap of song taste between 2 users
     """
 
@@ -186,9 +189,10 @@ async def show_overlap(*users: list[str]) -> dict:
 
 async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
     """
-    :arg user: The user to authenticate
-    :arg accuracy: The type of intersection to find
-    :arg playlist_ids: The ids of the playlists to compare
+    :arg user: The user to authenticate (Required)
+    :arg accuracy: The type of intersection to find (Required)
+    :arg playlist_ids: The ids of the playlists to compare (Required)
+    :return dict: The overlapping songs
     Finds the intersections between the playlists
     """
     tracks = []
@@ -213,7 +217,8 @@ async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
 
 def intersection(song_list: list) -> dict:
     """
-    :arg song_list: List of song lists to find the intersection of
+    :arg song_list: List of song lists to find the intersection of (Required)
+    :return dict: The songs that overlap exactly
     Finds the intersection of the songs
     """
 
@@ -243,7 +248,8 @@ def intersection(song_list: list) -> dict:
 
 def ordered_songs(song_list: list) -> dict:
     """
-    :arg song_list: List of song lists to find the intersection of
+    :arg song_list: List of song lists to find the intersection of (Required)
+    :return dict: The songs that overlap with more than half of the lists
     Finds the intersection of the songs
     """
     songs = []
@@ -267,7 +273,7 @@ def ordered_songs(song_list: list) -> dict:
 
 def link_to_uri(link: str) -> str:
     """
-    :arg link: The link to convert to uri
+    :arg link: The link to convert to uri (Required)
     :return str: The uri
     Converts a spotify link to a uri
     """
@@ -286,7 +292,7 @@ def link_to_uri(link: str) -> str:
 
 def uri_to_id(uri: str) -> str:
     """
-    :arg link: uri to convert
+    :arg link: uri to convert (Required)
     :return str: Id version of the uri
     Converts an uri to an id
     """
@@ -296,7 +302,7 @@ def uri_to_id(uri: str) -> str:
 
 def form_message(items: list) -> list:
     """
-    :arg items: A list of items to put into inline text
+    :arg items: A list of items to put into inline text (Required)
     :return list: A list of message blocks
     Creates an inline text message to send to discord
     """

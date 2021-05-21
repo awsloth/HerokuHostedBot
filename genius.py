@@ -17,7 +17,8 @@ base = "http://api.genius.com"
 
 def search(search_term: str) -> dict:
     """
-    :arg search_term: The name of the song to find the lyrics for
+    :arg search_term: The name of the song to find the lyrics for (Required)
+    :return dict: A dict containing the result of the search
     Searches through genius for the song and returns the dict
     """
     # Create url for request
@@ -34,8 +35,8 @@ def search(search_term: str) -> dict:
 
 def encode_search(name: str, artist: str = None) -> str:
     """
-    :arg name: Name of song
-    :arg artist: Artist of song
+    :arg name: Name of song (Required)
+    :arg artist: Artist of song (Optional)
     Encodes search for use in url
     """
     # Convert spaces to %20 for url
@@ -49,8 +50,8 @@ def encode_search(name: str, artist: str = None) -> str:
 
 def get_lyrics(search_term: str, artist: str = None) -> dict:
     """
-    :arg search_term: The name of the song to find the lyrics for
-    :arg artist: Artist of song
+    :arg search_term: The name of the song to find the lyrics for (Required)
+    :arg artist: Artist of song (Optional)
     :return list: A list containing the lines of the song
     Searches the genius website to get the lyrics of a song
     """
