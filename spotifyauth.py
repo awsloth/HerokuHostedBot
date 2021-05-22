@@ -5,6 +5,9 @@ import math
 import concurrent.futures
 import collections
 
+# Import 3rd party libraries
+from discord.ext import commands
+
 # Import custom script
 import spotifyapi
 import computations
@@ -15,7 +18,7 @@ client_secret = os.getenv('SPOTIFY_SECRET')
 redirect_uri = "http://localhost:8080/"
 
 
-async def setup_user(ctx, bot, scope: str) -> dict:
+async def setup_user(ctx: commands.Context, bot: commands.Bot, scope: str) -> dict:
     """
     :arg ctx: A discord context object (Required)
     :arg bot: An instance of discord bot class (Required)
@@ -95,6 +98,7 @@ re-authenticate using the `+setup all` command please```'''}
     response = sp.get_users_playlists(0)
 
     # TODO Check response has total in keys so that error is handled
+    # Do request again or raise error?
     total = response['total']
 
     # Get every playlist from the api
@@ -113,10 +117,9 @@ re-authenticate using the `+setup all` command please```'''}
     tracks = []
 
     for play_id in playlist_ids:
-        play_tracks = await get_playlist_songs(user, play_id, True)
+        play_tracks = await get_playlist_songs(user, play_id, True, sp)
         if play_tracks['Error'] != 0:
             return play_tracks
-
         tracks += play_tracks['info']
 
     # Get all the songs ids and get all the unique songs
@@ -171,7 +174,7 @@ async def sleep_timer(user: str, time: int) -> dict:
     return {"info": "Paused music", "Error": 0}
 
 
-def get_recommendations(user: str, songs: int, source: list) -> dict:
+def get_recommendations(user: str, songs: int, source: list[str]) -> dict:
     """
     :arg user: The user to get recommendations for (Required)
     :arg songs: The number of songs to get (Required)
@@ -217,8 +220,9 @@ def get_recommendations(user: str, songs: int, source: list) -> dict:
     return {"info": recs, "Error": 0}
 
 
-def add_to_queue(user: str, tracks: list) -> dict:
+def add_to_queue(user: str, tracks: list[str]) -> dict:
     """
+    :arg user: The user to add the tracks to (Required)
     :arg tracks: A list of track instances from spotify api (Required)
     :return str: Whether the request worked or not
     Adds given tracks to the user's queue
@@ -287,6 +291,7 @@ def create_playlist(user: str, tracks: list, name: str) -> dict:
 def top_ten(user: str, time_range: str) -> dict:
     """
     :arg user: The user to get the songs of (Required)
+    :arg time_range: The range to get the songs for (Required)
     :return dict: The top 10 songs
     Gets the top 10 tracks for the user
     """
@@ -311,7 +316,7 @@ def top_ten(user: str, time_range: str) -> dict:
     return {"info": tracks, "Error": 0}
 
 
-async def genres(user: str, artists: list) -> list:
+async def genres(user: str, artists: list[str]) -> list:
     """
     :arg user: The id of the user (Required)
     :arg artists: List of artists to get the genre of (Required)
@@ -338,37 +343,39 @@ async def genres(user: str, artists: list) -> list:
     return list(set(genre_list))
 
 
-async def get_playlist_songs(user: str, playlist_id: str, private: bool) -> dict:
+async def get_playlist_songs(user: str, playlist_id: str, private: bool, sp: spotifyapi.APIReq = None) -> dict:
     """
     :arg user: The user to authenticate (Required)
     :arg playlist_id: The id of the playlist to get songs for (Required)
     :arg private: Whether the playlist is private or not (Required)
+    :arg sp: An instance of the spotify api APIReq class for use (Optional)
     :return dict: The dict of songs in the playlist
     Gets all the songs in a playlist
     """
-    scope = ""
-    if private:
-        scope = "playlist-read-private"
+    if sp is None:
+        scope = ""
+        if private:
+            scope = "playlist-read-private"
 
-    if computations.check_user(user, scope):
-        return {"info": [],
-                "Error": f'''```User has wrong scope
-re-authenticate using the `+setup all` command please```'''}
+        if computations.check_user(user, scope):
+            return {"info": [],
+                    "Error": f'''```User has wrong scope
+    re-authenticate using the `+setup all` command please```'''}
 
-    # Get the auth code
-    if scope != "":
-        code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
-                               read_func=computations.get_user, update_func=computations.update_user,
-                               check_func=computations.check_user_exist)
-    else:
-        code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
-                               read_func=computations.get_user, update_func=computations.update_user,
-                               check_func=computations.check_user_exist)
+        # Get the auth code
+        if scope != "":
+            code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                                   read_func=computations.get_user, update_func=computations.update_user,
+                                   check_func=computations.check_user_exist)
+        else:
+            code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
+                                   read_func=computations.get_user, update_func=computations.update_user,
+                                   check_func=computations.check_user_exist)
 
-    # Initiate the APIReq class to interact with the api
-    sp = spotifyapi.APIReq(code)
+        # Initiate the APIReq class to interact with the api
+        sp = spotifyapi.APIReq(code)
 
-    # Get the total number of playlists the user has
+    # Get the total number of songs on the playlist
     response = sp.get_tracks_playlist(playlist_id, 1)
 
     # TODO check that response has total key
@@ -462,8 +469,9 @@ def cur_song(user: str) -> dict:
     return {"info": search, "Error": 0}
 
 
-async def get_tracks(request_set: list, loop, executor,
-                     sp: spotifyapi.APIReq, playlist_id: str) -> list:
+async def get_tracks(request_set: list, loop: asyncio.AbstractEventLoop,
+                     executor,
+                     sp: spotifyapi.APIReq, playlist_id: str) -> list[list, int]:
     """
     :arg request_set: The set of requests (Required)
     :arg loop: The asyncio loop (Required)
@@ -474,13 +482,14 @@ async def get_tracks(request_set: list, loop, executor,
     Makes requests with asyncio, with pauses when a timeout error
     occurs so that all songs are fetched
     """
+    print(f"Started fetching ~{len(request_set)*100} songs")
     fetched_tracks = []
     futures = []
     wait_time = None
     for request in request_set:
         futures.append(loop.run_in_executor(executor,
                                             sp.get_tracks_playlist, playlist_id,
-                                            request[0], request[1]))
+                                            *request))
 
     for future in futures:
         songs = await future
@@ -492,4 +501,5 @@ async def get_tracks(request_set: list, loop, executor,
         else:
             fetched_tracks += songs['items']
 
+    print("Finished fetching songs")
     return [fetched_tracks, wait_time]

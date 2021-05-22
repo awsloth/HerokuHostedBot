@@ -29,12 +29,13 @@ def search(search_term: str) -> dict:
     # Create the request to get the lyrics url and get the json
     r = requests.get(url, headers=header).json()
 
-    # TODO check that the returned json is of expected form
+    if 'response' not in r:
+        return {'info': [], 'Error': 'Search broke'}
 
     # Get the returned results
     results = r['response']['hits']
 
-    return results
+    return {'info': results, 'Error': 0}
 
 
 def encode_search(name: str, artist: str = None) -> str:
@@ -64,8 +65,13 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     results = search(search_term)
 
     # If there are no results return an error
-    if len(results) == 0:
-        return {"info": [], "Error": "Search term came up with no results, try again"}
+    if results['Error'] != 0:
+        return results
+    elif len(results['info']) == 0:
+        results['info'] = []
+        results['Error'] = "No results from search"
+
+    results = results['info']
 
     lyrics_url = None
 

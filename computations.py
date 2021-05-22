@@ -23,8 +23,8 @@ def check_user_exist(user: str) -> bool:
 
     # Get all personid-s in the database where the
     # id is the same as that of the user
-    cur.execute(f"""SELECT personid FROM AuthData
-    WHERE personid = '{user}';""")
+    cur.execute("SELECT personid FROM AuthData\n"
+                f"WHERE personid = '{user}';")
 
     # Get the results
     person = cur.fetchone()
@@ -49,8 +49,8 @@ def check_user(user: str, scope: str) -> bool:
     cur = con.cursor()
 
     # Get all scope where the personid matches that of the user
-    cur.execute(f"""SELECT scope FROM AuthData
-WHERE personid = '{user}';""")
+    cur.execute("SELECT scope FROM AuthData\n"
+                f"WHERE personid = '{user}';")
 
     # Get the results
     auth_scope = cur.fetchone()
@@ -86,8 +86,8 @@ def save_user(user: str, token: str, refresh: str, time: float, scope: str) -> N
     cur = con.cursor()
 
     # Insert a new user into the database
-    cur.execute(f"""INSERT INTO AuthData
-VALUES ('{user}', '{token}', '{refresh}', {time}, '{scope}');""")
+    cur.execute("INSERT INTO AuthData\n"
+                f"VALUES ('{user}', '{token}', '{refresh}', {time}, '{scope}');")
 
     # Close the connection to the database
     # and commit changes to the database
@@ -127,8 +127,8 @@ def get_user(user: str) -> list:
     cur = con.cursor()
 
     # Get all the information about the user where the id matches
-    cur.execute(f"""SELECT * FROM AuthData
-WHERE personid = '{user}';""")
+    cur.execute("SELECT * FROM AuthData\n"
+                f"WHERE personid = '{user}';")
 
     # Get the results
     result = cur.fetchone()
@@ -154,9 +154,9 @@ def update_user(user: str, token: str, refresh: str, time: float, scope: str) ->
     cur = con.cursor()
 
     # Update the database where the id matches that of the user
-    cur.execute(f"""UPDATE AuthData
-SET authtoken = '{token}', refreshtoken = '{refresh}', time={time}, scope = '{scope}'
-WHERE personid = '{user}';""")
+    cur.execute("UPDATE AuthData\n"
+                f"SET authtoken = '{token}', refreshtoken = '{refresh}', time={time}, scope = '{scope}'\n"
+                f"WHERE personid = '{user}';")
 
     # Close the connection to the database
     # and commit changes to the database
@@ -187,7 +187,7 @@ async def show_overlap(*users: list[str]) -> dict:
     return overlap
 
 
-async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
+async def playlist_overlap(user: str, accuracy: str, *playlist_ids: list[str]) -> dict:
     """
     :arg user: The user to authenticate (Required)
     :arg accuracy: The type of intersection to find (Required)
@@ -307,14 +307,14 @@ def form_message(items: list) -> list:
     :return list: A list of message blocks
     Creates an inline text message to send to discord
     """
-    # TODO check this function works, because it is slightly dodgy
-
     # Go through all lines and if the line still fits within
     # the 2000 character limit add it, else create a new message
     i = 0
     messages = []
     while i < len(items):
         message = "```"
+        if len(items[i]) > 1997:
+            items[i] = items[i][:1993] + " ..."
         while i < len(items) and (len(message) + 3 + len(items[i]) < 2000):
             message += f"{items[i]}\n"
             i += 1
@@ -325,7 +325,7 @@ def form_message(items: list) -> list:
     return messages
 
 
-def id_to_uri(id_type: str, id_: int) -> str:
+def id_to_uri(id_type: str, id_: str) -> str:
     """
     :arg id_type: The type of thing the id is
     :arg id: id to convert (Required)
