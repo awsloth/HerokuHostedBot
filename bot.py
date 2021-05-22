@@ -154,9 +154,11 @@ class AccountCommands(commands.Cog):
 
             # If there is no access token, then error has occurred
             # and show the error
-            if 'access_token' not in response:
-                await ctx.send("`An error has occurred")
+            if response['Error'] != 0:
+                await ctx.send(response['Error'])
                 return -1
+
+            response = response['info']
 
             # Get the access and refresh token from the response
             access_token = response['access_token']

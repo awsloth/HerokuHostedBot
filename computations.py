@@ -306,6 +306,8 @@ def form_message(items: list) -> list:
     :return list: A list of message blocks
     Creates an inline text message to send to discord
     """
+    # TODO check this function works, because it is slightly dodgy
+
     # Go through all lines and if the line still fits within
     # the 2000 character limit add it, else create a new message
     i = 0

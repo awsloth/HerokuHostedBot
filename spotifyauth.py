@@ -14,6 +14,9 @@ client_id = os.getenv('SPOTIFY_ID')
 client_secret = os.getenv('SPOTIFY_SECRET')
 redirect_uri = "http://localhost:8080/"
 
+# TODO use only info needed when sorting through songs and not a dict with all info
+# TODO so that memory usage is lower
+
 
 async def setup_user(ctx, bot, scope: str) -> dict:
     """
@@ -38,14 +41,19 @@ async def setup_user(ctx, bot, scope: str) -> dict:
     # Wait for the user to send a message
     response = await bot.wait_for('message', check=check)
 
+    if "?code=" not in response:
+        return {"info": [], "Error": "Invalid url sent"}
+
     # Get the auth_code from the url
     auth_code = response.content.split("?code=")[1]
 
     # Get the response from the spotify api
     response = oauth.grab_token(auth_code)
 
-    # Add error handling here
-    return response
+    if "access_token" not in response:
+        return {"info": [], "Error": "Request failed, try again"}
+
+    return {"info": response, "Error": 0}
 
 
 def get_url(scope: str) -> list[str, object]:
@@ -87,12 +95,18 @@ re-authenticate using the `+setup all` command please```'''}
     sp = spotifyapi.APIReq(code)
 
     # Get the total number of playlists the user has
-    total = sp.get_users_playlists(0)['total']
+    response = sp.get_users_playlists(0)
+
+    # TODO Check response has total in keys so that error is handled
+    total = response['total']
 
     # Get every playlist from the api
     playlists = []
     for i in range(math.ceil(total/50)):
-        playlists += sp.get_users_playlists(50, i*50)['items']
+        playlists_info = sp.get_users_playlists(50, i*50)
+
+        # TODO Check playlists_info is of form expected
+        playlists += playlists_info['items']
 
     # Get the playlist ids and the number of tracks
     # in each playlist
@@ -105,6 +119,7 @@ re-authenticate using the `+setup all` command please```'''}
         play_tracks = await get_playlist_songs(user, play_id, True)
         if play_tracks['Error'] != 0:
             return play_tracks
+
         tracks += play_tracks['info']
 
     # Get all the songs ids and get all the unique songs
@@ -142,6 +157,7 @@ async def sleep_timer(user: str, time: int) -> dict:
     # playback can stop at the end of a track
     info = sp.get_info_playback()
 
+    # TODO check that the info has expected dict keys
     # Calculate the time left to wait for the end of the track
     time_left = (info['item']['duration_ms']-info['progress_ms'])
 
@@ -150,8 +166,10 @@ async def sleep_timer(user: str, time: int) -> dict:
 
     # Pause the playback
     ret = sp.pause_playback()
+
     if ret != "Successful":
         return {"info": [], "Error": ret}
+
     return {"info": "Paused music", "Error": 0}
 
 
@@ -170,6 +188,8 @@ def get_recommendations(user: str, songs: int, source: list) -> dict:
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
+
+    # Convert seed
     if source[:17] == "spotify:playlist":
         # Get the first 5 tracks from the playlist or 5 random songs
         track_data = sp.get_tracks_playlist(source[17:], 5)['items']
@@ -195,6 +215,7 @@ def get_recommendations(user: str, songs: int, source: list) -> dict:
     else:
         return {"info": [], "Error": "Error no seed source"}
 
+    # TODO add error handling to the returned recommendations
     return {"info": recs, "Error": 0}
 
 
@@ -217,6 +238,8 @@ def add_to_queue(user: str, tracks: list) -> dict:
     sp = spotifyapi.APIReq(code)
 
     for track in tracks:
+        # TODO check that the tracks are added to playback
+        # TODO and add error handling if not
         sp.add_track_playback(track['uri'])
 
     return {"info": "Request successful", "Error": 0}
@@ -243,14 +266,21 @@ def create_playlist(user: str, tracks: list, name: str) -> dict:
     sp = spotifyapi.APIReq(code)
 
     # Get user id
-    user_id = sp.get_user()['id']
+    response = sp.get_user()
+
+    # TODO add error handling to check id in the keys
+    user_id = response['id']
 
     # Create playlist
-    playlist_id = sp.create_playlist(user_id, name)['id']
+    playlist = sp.create_playlist(user_id, name)
+
+    # TODO check the returned dict has id key
+    playlist_id = playlist['id']
 
     track_uris = [track['uri'] for track in tracks]
 
     for i in range(math.ceil(len(track_uris)/100)):
+        # TODO check that each request is made successfully
         sp.add_items_playlist(playlist_id, track_uris[i*100:(i+1)*100])
 
     return {"info": "Request successful", "Error": 0}
@@ -275,9 +305,12 @@ def top_ten(user: str, time_range: str) -> dict:
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
 
-    tracks = sp.top_tracks(f"{time_range}_term", 10)
+    response = sp.top_tracks(f"{time_range}_term", 10)
 
-    return {"info": tracks['items'], "Error": 0}
+    # TODO check the returned tracks are of form expected
+    tracks = response['items']
+
+    return {"info": tracks, "Error": 0}
 
 
 async def genres(user: str, artists: list) -> list:
@@ -294,8 +327,14 @@ async def genres(user: str, artists: list) -> list:
 
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
+
     genre_list = []
-    for artist in sp.get_artists(artists)['artists']:
+
+    artist_list = sp.get_artists(artists)
+
+    # TODO check the response is of form expected
+    artists = artist_list['artists']
+    for artist in artists:
         genre_list += artist['genres']
 
     return list(set(genre_list))
@@ -332,7 +371,10 @@ re-authenticate using the `+setup all` command please```'''}
     sp = spotifyapi.APIReq(code)
 
     # Get the total number of playlists the user has
-    total = sp.get_tracks_playlist(playlist_id, 1)['total']
+    response = sp.get_tracks_playlist(playlist_id, 1)
+
+    # TODO check that response has total key
+    total = response['total']
 
     # Create a list of requests to be made
     requests = [[100, i*100] for i in range(math.ceil(total/100))]
@@ -411,6 +453,10 @@ def cur_song(user: str) -> dict:
     # Get the information about the user's playback
     info = sp.get_info_playback()
 
+    if 'item' not in info:
+        return {"info": [], "Error": "```The request failed, make sure that you have an active"
+                                     " device and are a premium user```"}
+
     # Create a string holding the song name and artist
     search = [info['item']['name'], info['item']['artists'][0]['name']]
 
@@ -440,6 +486,8 @@ async def get_tracks(request_set: list, loop, executor,
 
     for future in futures:
         songs = await future
+        # TODO add other error handling for case where not expected
+        # TODO but not with a time_out
         if 'time_out' in songs:
             # Failed request
             wait_time = songs['time_out']

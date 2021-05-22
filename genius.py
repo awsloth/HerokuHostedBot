@@ -14,6 +14,8 @@ header = {"Authorization": f"Bearer {code}"}
 # Base url of site
 base = "http://api.genius.com"
 
+# TODO add more searches to try and get the correct song
+
 
 def search(search_term: str) -> dict:
     """
@@ -26,6 +28,8 @@ def search(search_term: str) -> dict:
 
     # Create the request to get the lyrics url and get the json
     r = requests.get(url, headers=header).json()
+
+    # TODO check that the returned json is of expected form
 
     # Get the returned results
     results = r['response']['hits']
@@ -55,17 +59,17 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     :return list: A list containing the lines of the song
     Searches the genius website to get the lyrics of a song
     """
-    print(search_term, artist)
     search_term = encode_search(search_term, artist)
 
     results = search(search_term)
 
     # If there are no results return an error
-    if not len(results) > 0:
+    if len(results) == 0:
         return {"info": [], "Error": "Search term came up with no results, try again"}
 
     lyrics_url = None
 
+    # TODO improve this for better search accuracy
     # Get the url from the results
     if artist is not None:
         found = False
