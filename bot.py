@@ -209,6 +209,8 @@ class SpotifyAPI(commands.Cog):
         """
         # Get the overlap of the users songs
         user_ids = list(map(lambda x: x.id if not isinstance(x, str) else x, users))
+
+        # TODO improve speeds of this request
         info = await computations.show_overlap(*user_ids)
 
         # If an error occurred, send the error to the user
@@ -220,7 +222,7 @@ class SpotifyAPI(commands.Cog):
         overlap_percentage = info['info']['percentage']
         overlap = info['info']['total']
 
-        track_info = [[tracks['name'], tracks['artists'][0]['name']] for tracks in info['info']['songs']]
+        track_info = [track for track, _ in info['info']['songs']]
 
         # Send the songs by the method specified by the user
         if output.lower() == "chat":
@@ -232,7 +234,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "queue":
             # add tracks to queue
             result = spotifyauth.add_to_queue(str(ctx.author.id),
-                                              info['info'])
+                                              [track[1] for track in info['info']['songs']])
 
             # If an error occurred adding to queue, send the error
             if result['Error'] != 0:
@@ -245,7 +247,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
             result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 info['info'], 'userOverlapPlaylist')
+                                                 [track[1] for track in info['info']['songs']], 'userOverlapPlaylist')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:
@@ -280,10 +282,10 @@ class SpotifyAPI(commands.Cog):
             return -1
 
         if accuracy == "rough":
-            track_info = [[tracks['name'], tracks['artists'][0]['name'], nums] for nums,
-                          tracks in info['info']['songs']]
+            track_info = [track + [nums] for nums,
+                          track, _ in info['info']['songs']]
         else:
-            track_info = [[track['name'], track['artists'][0]['name']] for track in info['info']['songs']]
+            track_info = [track[0] for track in info['info']['songs']]
 
         # Send the songs by the method specified by the user
         if output.lower() == "chat":
@@ -295,7 +297,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "queue":
             # add tracks to queue
             result = spotifyauth.add_to_queue(str(ctx.author.id),
-                                              [track[1] for track in info['info']['songs']])
+                                              [track[2] for track in info['info']['songs']])
 
             # If an error occurred adding to queue, send the error
             if result['Error'] != 0:
@@ -308,7 +310,7 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
             result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 [track[1] for track in info['info']['songs']], 'playlistOverlapSongs')
+                                                 [track[2] for track in info['info']['songs']], 'playlistOverlapSongs')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:

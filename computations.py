@@ -205,7 +205,8 @@ async def playlist_overlap(user: str, accuracy: str, *playlist_ids) -> dict:
     user_songs = []
     for play_tracks in tracks:
         track_ids = [x['track']['id'] for x in play_tracks if not x['track']['is_local']]
-        track_dict = [x['track'] for x in play_tracks if not x['track']['is_local']]
+        track_dict = [[x['track']['name'], x['track']['artists'][0]['name']] for x in play_tracks
+                      if not x['track']['is_local']]
         songs = dict(zip(track_ids, track_dict))
         user_songs.append(songs)
 
@@ -239,7 +240,7 @@ def intersection(song_list: list) -> dict:
         id_dict.update(song_dict)
 
     # Get all the names from the dict
-    song_details = [id_dict[song_id] for song_id in songs]
+    song_details = [[id_dict[song_id], song_id] for song_id in songs]
 
     # Return the information
     return {"info": {"songs": song_details, "total": len(songs),
@@ -265,7 +266,7 @@ def ordered_songs(song_list: list) -> dict:
     for sub_dict in song_list:
         song_dict.update(sub_dict)
 
-    song_info = sorted([[song_count, song_dict[song]] for song_count, song in filtered_songs],
+    song_info = sorted([[song_count, song_dict[song], song] for song_count, song in filtered_songs],
                        key=lambda x: x[0], reverse=True)
 
     return {"info": {"songs": song_info}, "Error": 0}
@@ -322,3 +323,14 @@ def form_message(items: list) -> list:
         messages.append(message)
 
     return messages
+
+
+def id_to_uri(id_type: str, id_: int) -> str:
+    """
+    :arg id_type: The type of thing the id is
+    :arg id: id to convert (Required)
+    :return str: uri version of the id
+    Converts an id to a uri
+    """
+    uri = f"spotify:{id_type}:{id_}"
+    return uri

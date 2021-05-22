@@ -14,9 +14,6 @@ client_id = os.getenv('SPOTIFY_ID')
 client_secret = os.getenv('SPOTIFY_SECRET')
 redirect_uri = "http://localhost:8080/"
 
-# TODO use only info needed when sorting through songs and not a dict with all info
-# TODO so that memory usage is lower
-
 
 async def setup_user(ctx, bot, scope: str) -> dict:
     """
@@ -124,7 +121,8 @@ re-authenticate using the `+setup all` command please```'''}
 
     # Get all the songs ids and get all the unique songs
     track_ids = [x['track']['id'] for x in tracks if not x['track']['is_local']]
-    track_dict = [x['track'] for x in tracks if not x['track']['is_local']]
+    track_dict = [[x['track']['name'], x['track']['artists'][0]['name']] for x in tracks
+                  if not x['track']['is_local']]
     songs = dict(zip(track_ids, track_dict))
 
     return {"info": songs, "Error": 0}
@@ -240,7 +238,7 @@ def add_to_queue(user: str, tracks: list) -> dict:
     for track in tracks:
         # TODO check that the tracks are added to playback
         # TODO and add error handling if not
-        sp.add_track_playback(track['uri'])
+        sp.add_track_playback(computations.id_to_uri("track", track))
 
     return {"info": "Request successful", "Error": 0}
 
