@@ -482,7 +482,6 @@ async def get_tracks(request_set: list, loop: asyncio.AbstractEventLoop,
     Makes requests with asyncio, with pauses when a timeout error
     occurs so that all songs are fetched
     """
-    print(f"Started fetching ~{len(request_set)*100} songs")
     fetched_tracks = []
     futures = []
     wait_time = None
@@ -501,5 +500,4 @@ async def get_tracks(request_set: list, loop: asyncio.AbstractEventLoop,
         else:
             fetched_tracks += songs['items']
 
-    print("Finished fetching songs")
     return [fetched_tracks, wait_time]
