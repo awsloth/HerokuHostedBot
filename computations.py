@@ -165,13 +165,17 @@ def update_user(user: str, token: str, refresh: str, time: float, scope: str) ->
     con.close()
     
 
-async def show_overlap(*users: list[str]) -> dict:
+async def show_overlap(*users) -> dict:
     """
     :arg users: The id of users to compare (Required)
     :return list: Contains the songs that overlap,
     The total songs that overlap and the percent overlap
     Gives information about the overlap of song taste between 2 users
     """
+    names = None
+    if isinstance(users[0], list):
+        names = [user[1] for user in users]
+        users = [user[0] for user in users]
 
     # For each user grab their songs via the api
     user_songs = []
@@ -180,6 +184,11 @@ async def show_overlap(*users: list[str]) -> dict:
         if response['Error'] == 0:
             user_songs.append(response['info'])
         else:
+            if names is not None:
+                error = response['Error']
+                error = error.replace("User", names[users.index(user)])
+                response['Error'] = error
+                return response
             return response
 
     overlap = intersection(user_songs)

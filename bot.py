@@ -205,10 +205,10 @@ class SpotifyAPI(commands.Cog):
         """
         Compares the music taste of the specified users
         :arg users: The users to compare the music tastes of.
-                    To compare @ the user of use their discord id (Required)
+                    To compare @ the user or use their discord id (Required)
         """
         # Get the overlap of the users songs
-        user_ids = list(map(lambda x: x.id if not isinstance(x, str) else x, users))
+        user_ids = list(map(lambda x: [x.id, x.name] if not isinstance(x, str) else x, users))
 
         # TODO improve speeds of this request
         info = await computations.show_overlap(*user_ids)
