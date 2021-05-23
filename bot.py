@@ -208,7 +208,7 @@ class SpotifyAPI(commands.Cog):
                     To compare @ the user or use their discord id (Required)
         """
         if output not in ["chat", "queue", "playlist"]:
-            ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
+            await ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
             return -1
         # Get the overlap of the users songs
         user_ids = list(map(lambda x: [x.id, x.name] if not isinstance(x, str) else x, users))
@@ -277,7 +277,7 @@ class SpotifyAPI(commands.Cog):
             return -1
 
         if output not in ["chat", "queue", "playlist"]:
-            ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
+            await ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
             return -1
 
         playlists = [computations.uri_to_id(computations.link_to_uri(playlist)) for playlist in playlists]
@@ -376,7 +376,7 @@ class SpotifyAPI(commands.Cog):
         :arg source: A playlist link or a list of song/artist links (max 5)
         """
         if output not in ["chat", "queue", "playlist"]:
-            ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
+            await ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
             return -1
 
         # Convert the links to uris
