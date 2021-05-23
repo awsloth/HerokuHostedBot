@@ -4,7 +4,7 @@ import time
 import os
 import json
 
-# Import pip library
+# Import 3rd party library
 import requests
 
 # Import from libraries
@@ -306,6 +306,7 @@ class APIReq:
         body = {
             "uris": uris
             }
+
         if position is not None:
             body.update({"position": position})
 

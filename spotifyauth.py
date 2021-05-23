@@ -17,6 +17,11 @@ client_id = os.getenv('SPOTIFY_ID')
 client_secret = os.getenv('SPOTIFY_SECRET')
 redirect_uri = "http://localhost:8080/"
 
+# Constant for retry amounts
+RETRY_AMOUNT = 5
+
+# TODO Add more comments
+
 
 async def setup_user(ctx: commands.Context, bot: commands.Bot, scope: str) -> dict:
     """
@@ -97,8 +102,12 @@ re-authenticate using the `+setup all` command please```'''}
     # Get the total number of playlists the user has
     response = sp.get_users_playlists(0)
 
-    # TODO Check response has total in keys so that error is handled
-    # Do request again or raise error?
+    retries = RETRY_AMOUNT
+    while 'total' not in response:
+        response = sp.get_users_playlists(0)
+        retries -= 1
+        if retries == 0:
+            return {'info': [], 'Error': "Max retries attempted, request failed"}
     total = response['total']
 
     # Get every playlist from the api
@@ -106,7 +115,12 @@ re-authenticate using the `+setup all` command please```'''}
     for i in range(math.ceil(total/50)):
         playlists_info = sp.get_users_playlists(50, i*50)
 
-        # TODO Check playlists_info is of form expected
+        retries = RETRY_AMOUNT
+        while 'items' not in playlists_info:
+            playlists_info = sp.get_users_playlists(50, i * 50)
+            retries -= 1
+            if retries == 0:
+                return {'info': [], 'Error': "Max retries attempted, request failed"}
         playlists += playlists_info['items']
 
     # Get the playlist ids and the number of tracks
@@ -158,7 +172,13 @@ async def sleep_timer(user: str, time: int) -> dict:
     # playback can stop at the end of a track
     info = sp.get_info_playback()
 
-    # TODO check that the info has expected dict keys
+    retries = RETRY_AMOUNT
+    while 'item' not in info:
+        info = sp.get_info_playback()
+        retries -= 1
+        if retries == 0:
+            return {'info': [], 'Error': 'Max retries reached request failed'}
+
     # Calculate the time left to wait for the end of the track
     time_left = (info['item']['duration_ms']-info['progress_ms'])
 
@@ -171,7 +191,7 @@ async def sleep_timer(user: str, time: int) -> dict:
     if ret != "Successful":
         return {"info": [], "Error": ret}
 
-    return {"info": "Paused music", "Error": 0}
+    return {'info': 'Paused music', 'Error': 0}
 
 
 def get_recommendations(user: str, songs: int, source: list[str]) -> dict:
@@ -239,10 +259,15 @@ def add_to_queue(user: str, tracks: list[str]) -> dict:
     # Initiate the APIReq class to interact with the api
     sp = spotifyapi.APIReq(code)
 
+    info = []
     for track in tracks:
-        # TODO check that the tracks are added to playback
-        # TODO and add error handling if not
-        sp.add_track_playback(computations.id_to_uri("track", track))
+        response = sp.add_track_playback(computations.id_to_uri("track", track))
+        retries = RETRY_AMOUNT
+        while response != "Successful":
+            response = sp.add_track_playback(computations.id_to_uri("track", track))
+            retries -= 1
+            if retries == 0:
+                info.append(f"Failed on track {track}")
 
     return {"info": "Request successful", "Error": 0}
 
@@ -270,13 +295,23 @@ def create_playlist(user: str, tracks: list, name: str) -> dict:
     # Get user id
     response = sp.get_user()
 
-    # TODO add error handling to check id in the keys
+    retries = RETRY_AMOUNT
+    while 'id' not in response:
+        response = sp.get_user()
+        retries -= 1
+        if retries == 0:
+            return {'info': [], 'Error': 'Max retries reached, request failed'}
     user_id = response['id']
 
     # Create playlist
     playlist = sp.create_playlist(user_id, name)
 
-    # TODO check the returned dict has id key
+    retries = RETRY_AMOUNT
+    while 'id' not in playlist:
+        playlist = sp.create_playlist(user_id, name)
+        retries -= 1
+        if retries == 0:
+            return {'info': [], 'Error': 'Max retries reached, request failed'}
     playlist_id = playlist['id']
 
     track_uris = [track['uri'] for track in tracks]
@@ -310,13 +345,18 @@ def top_ten(user: str, time_range: str) -> dict:
 
     response = sp.top_tracks(f"{time_range}_term", 10)
 
-    # TODO check the returned tracks are of form expected
+    retries = RETRY_AMOUNT
+    while 'items' not in response:
+        response = sp.top_tracks(f"{time_range}_term", 10)
+        retries -= 1
+        if retries == 0:
+            return {'info': [], 'Error': 'Max retries used, request failed'}
     tracks = response['items']
 
     return {"info": tracks, "Error": 0}
 
 
-async def genres(user: str, artists: list[str]) -> list:
+async def genres(user: str, artists: list[str]) -> dict:
     """
     :arg user: The id of the user (Required)
     :arg artists: List of artists to get the genre of (Required)
@@ -335,12 +375,18 @@ async def genres(user: str, artists: list[str]) -> list:
 
     artist_list = sp.get_artists(artists)
 
-    # TODO check the response is of form expected
+    retries = RETRY_AMOUNT
+    while 'artists' not in artist_list:
+        artist_list = sp.get_artists(artists)
+        retries -= 1
+        if retries == 0:
+            return {'info': [], 'Error': 'Max retries reached'}
+
     artists = artist_list['artists']
     for artist in artists:
         genre_list += artist['genres']
 
-    return list(set(genre_list))
+    return {'info': list(set(genre_list)), 'Error': 0}
 
 
 async def get_playlist_songs(user: str, playlist_id: str, private: bool, sp: spotifyapi.APIReq = None) -> dict:
@@ -378,7 +424,12 @@ async def get_playlist_songs(user: str, playlist_id: str, private: bool, sp: spo
     # Get the total number of songs on the playlist
     response = sp.get_tracks_playlist(playlist_id, 1)
 
-    # TODO check that response has total key
+    retries = RETRY_AMOUNT
+    while 'total' not in response:
+        response = sp.get_tracks_playlist(playlist_id, 1)
+        retries -= 1
+        if retries == 0:
+            return {'info': [], 'Error': 'Max retries reached, request failed'}
     total = response['total']
 
     # Create a list of requests to be made
@@ -497,7 +548,11 @@ async def get_tracks(request_set: list, loop: asyncio.AbstractEventLoop,
         if 'time_out' in songs:
             # Failed request
             wait_time = songs['time_out']
-        else:
+        elif 'items' in songs:
             fetched_tracks += songs['items']
+        else:
+            # An error has occurred
+            # try again?
+            ...
 
     return [fetched_tracks, wait_time]

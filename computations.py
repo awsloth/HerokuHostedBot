@@ -187,7 +187,7 @@ async def show_overlap(*users: list[str]) -> dict:
     return overlap
 
 
-async def playlist_overlap(user: str, accuracy: str, *playlist_ids: list[str]) -> dict:
+async def playlist_overlap(user: str, accuracy: str, *playlist_ids: str) -> dict:
     """
     :arg user: The user to authenticate (Required)
     :arg accuracy: The type of intersection to find (Required)

@@ -512,8 +512,12 @@ class SpotifyAPI(commands.Cog):
         # Get the genres for all the ids
         genres = await spotifyauth.genres(str(ctx.author.id), list(set(artists)))
 
+        if genres['Error'] != 0:
+            await ctx.send(genres['Error'])
+            return -1
+
         # Form inline code message to show song names and artists
-        messages = computations.form_message(sorted(list(genres)))
+        messages = computations.form_message(sorted(list(genres['info'])))
 
         # Send each message
         for message in messages:
