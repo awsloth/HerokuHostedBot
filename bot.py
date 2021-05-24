@@ -337,6 +337,7 @@ class SpotifyAPI(commands.Cog):
                             "actual" - The actual time
                             "wait" - Time to wait
         """
+        # TODO fix this function, the actual time doesn't work
         # Split up the time into hours, minutes and secs
         hours, minutes, seconds = map(int, sleep_time.split(":"))
 
@@ -350,6 +351,10 @@ class SpotifyAPI(commands.Cog):
             day = today.day
             time_secs = datetime.datetime(year, month, day, hours, minutes, seconds).timestamp()
             total_time_secs = time_secs-today.timestamp()
+            if total_time_secs < 0:
+                total_time_secs += 86400
+
+        print(total_time_secs)
 
         await ctx.send("Waiting to sleep")
         result = await spotifyauth.sleep_timer(str(ctx.author.id),
