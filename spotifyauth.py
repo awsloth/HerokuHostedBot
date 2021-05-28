@@ -137,9 +137,10 @@ re-authenticate using the `+setup all` command please```'''}
         tracks += play_tracks['info']
 
     # Get all the songs ids and get all the unique songs
-    track_ids = [x['track']['id'] for x in tracks if not x['track']['is_local']]
+    track_ids = [x['track']['id'] for x in tracks if x['track'] is not None and not x['track']['is_local']]
     track_dict = [[x['track']['name'], x['track']['artists'][0]['name']] for x in tracks
-                  if not x['track']['is_local']]
+                  if x['track'] is not None and not x['track']['is_local']]
+
     songs = dict(zip(track_ids, track_dict))
 
     return {"info": songs, "Error": 0}
