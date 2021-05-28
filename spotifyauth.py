@@ -46,7 +46,7 @@ async def setup_user(ctx: commands.Context, bot: commands.Bot, scope: str) -> di
     # Wait for the user to send a message
     response = await bot.wait_for('message', check=check)
 
-    if "?code=" not in response:
+    if "?code=" not in str(response.content):
         return {"info": [], "Error": "Invalid url sent"}
 
     # Get the auth_code from the url
