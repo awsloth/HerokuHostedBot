@@ -29,7 +29,7 @@ multidict==5.1.0
 psycopg2==2.8.6
 requests==2.25.1
 soupsieve==2.2.1
-git+https://github.com/awsloth/spotifyAPI@main#spotifyapi
+git+https://github.com/awsloth/spotifyAPI@main
 typing-extensions==3.10.0.0
 urllib3==1.26.4
 yarl==1.6.3
