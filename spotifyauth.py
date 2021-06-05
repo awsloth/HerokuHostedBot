@@ -390,7 +390,7 @@ async def genres(user: str, artists: list[str]) -> dict:
     return {'info': list(set(genre_list)), 'Error': 0}
 
 
-async def get_playlist_songs(user: str, playlist_id: str, private: bool, sp = None) -> dict:
+async def get_playlist_songs(user: str, playlist_id: str, private: bool, sp: spotifyapi.APIReq = None) -> dict:
     """
     :arg user: The user to authenticate (Required)
     :arg playlist_id: The id of the playlist to get songs for (Required)
