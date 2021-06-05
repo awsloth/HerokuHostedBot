@@ -590,6 +590,24 @@ class SpotifyAPI(commands.Cog):
         for message in messages:
             await ctx.send(message)
 
+    @commands.command(name='optIn')
+    async def opt_in(self, ctx):
+        """
+        Adds the user to the opt in list for weekly updated playlist
+        """
+        computations.change_opt(str(ctx.author.id), True)
+
+        await ctx.send("Opted in!")
+
+    @commands.command(name='optOut')
+    async def opt_out(self, ctx):
+        """
+        Adds the user to the opt in list for weekly updated playlist
+        """
+        computations.change_opt(str(ctx.author.id), False)
+
+        await ctx.send("Opted out.")
+
 
 # Add cogs to bot
 bot.add_cog(AccountCommands())

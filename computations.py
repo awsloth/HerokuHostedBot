@@ -176,7 +176,7 @@ def get_users_opt() -> list:
 
     # Get all the information about the user where the id matches
     cur.execute("SELECT personid FROM AuthData\n"
-                f"WHERE OptIn = True;")
+                "WHERE OptIn = True;")
 
     # Get the results
     result = cur.fetchone()
@@ -185,6 +185,27 @@ def get_users_opt() -> list:
     cur.close()
     con.close()
     return result
+
+
+def change_opt(user: str, opt: bool) -> None:
+    """
+    :arg user: The user to change the opt for
+    :arg opt: The value to set opt to
+    Changes the value of opt for the user
+    """
+    # Open a connection to the database
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+
+    # Get all the information about the user where the id matches
+    cur.execute("UPDATE AuthData\n"
+                f"SET OptIn = {opt}\n"
+                f"WHERE PersonId = '{user}';")
+
+    # Close the connection to the database
+    cur.close()
+    con.commit()
+    con.close()
     
 
 async def show_overlap(*users) -> dict:
