@@ -608,6 +608,19 @@ class SpotifyAPI(commands.Cog):
 
         await ctx.send("Opted out.")
 
+    @commands.command(name='update')
+    async def update(self, ctx):
+        """
+        Updates your top 99 playlist
+        """
+        info = spotifyauth.top_playlist(str(ctx.author.id))
+
+        if info['Error'] != 0:
+            await ctx.send(info['Error'])
+            return -1
+
+        await ctx.send("Updated")
+
 
 # Add cogs to bot
 bot.add_cog(AccountCommands())

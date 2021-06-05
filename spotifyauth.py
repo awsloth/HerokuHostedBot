@@ -557,3 +557,39 @@ async def get_tracks(request_set: list, loop: asyncio.AbstractEventLoop,
             ...
 
     return [fetched_tracks, wait_time]
+
+
+def top_playlist(user: str) -> dict:
+    """
+    :arg user: The user to create the playlist for
+    :return dict: Whether the request was successful or not
+    Creates (or updates) a playlist containing the top 99 songs for a user
+    """
+    scope = "user-top-read playlist-modify-public"
+    if computations.check_user(user, scope):
+        return {"info": [], "Error": "Error, user not authenticated for request, use command `+setup all`"}
+
+    # Get the auth code
+    code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
+                           read_func=computations.get_user, update_func=computations.update_user,
+                           check_func=computations.check_user_exist)
+
+    # Create an APIReq instance
+    sp = spotifyapi.APIReq(code)
+
+    # Get all tracks
+    tracks = [track['uri'] for track in sp.top_tracks("short_term", 50)['items']]
+    tracks += [track['uri'] for track in sp.top_tracks("short_term", 50, 49)['items']]
+
+    play_id = None
+    for playlist in sp.get_users_playlists()['items']:
+        if playlist['name'] == "top99":
+            play_id = playlist['id']
+
+    if play_id is None:
+        user_id = sp.get_user()['id']
+        play_id = sp.create_playlist(user_id, "top99")['id']
+
+    info = sp.replace_items(play_id, tracks)
+
+    return {"info": info, "Error": 0}
