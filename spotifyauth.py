@@ -523,7 +523,7 @@ def cur_song(user: str) -> dict:
 
 async def get_tracks(request_set: list, loop: asyncio.AbstractEventLoop,
                      executor,
-                     sp, playlist_id: str) -> list[list, int]:
+                     sp: spotifyapi.APIReq, playlist_id: str) -> list[list, int]:
     """
     :arg request_set: The set of requests (Required)
     :arg loop: The asyncio loop (Required)
