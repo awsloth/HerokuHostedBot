@@ -136,7 +136,7 @@ def get_user(user: str) -> list:
     # Close the connection to the database
     cur.close()
     con.close()
-    return result[1:]
+    return result[1:-1]
 
 
 def update_user(user: str, token: str, refresh: str, time: float, scope: str) -> None:
@@ -163,6 +163,28 @@ def update_user(user: str, token: str, refresh: str, time: float, scope: str) ->
     cur.close()
     con.commit()
     con.close()
+
+
+def get_users_opt() -> list:
+    """
+    :return list: A list of users who have opted in
+    Grabs the opted in users from the database
+    """
+    # Open a connection to the database
+    con = psycopg2.connect(URL)
+    cur = con.cursor()
+
+    # Get all the information about the user where the id matches
+    cur.execute("SELECT personid FROM AuthData\n"
+                f"WHERE OptIn = True;")
+
+    # Get the results
+    result = cur.fetchone()
+
+    # Close the connection to the database
+    cur.close()
+    con.close()
+    return result
     
 
 async def show_overlap(*users) -> dict:
