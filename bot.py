@@ -32,6 +32,19 @@ Then accept the bot access
 After redirect to the localhost site copy the new url and paste here```'''
 
 
+# Update playlists every week
+@bot.event
+async def on_ready():
+    while 1:
+        time_to_sleep = computations.find_time()
+        print(time_to_sleep)
+        await asyncio.sleep(time_to_sleep)
+
+        users = computations.get_users_opt()
+        for user in users:
+            print(spotifyauth.top_playlist(user))
+
+
 # Function for dealing with reactions
 async def auth_scope(ctx: discord.ext.commands.Context, command: str, req_scope: list) -> bool:
     """

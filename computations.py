@@ -1,6 +1,7 @@
 # Import standard libraries
 import os
 import collections
+import datetime
 
 # Import 3rd party libraries
 import psycopg2
@@ -386,3 +387,22 @@ def id_to_uri(id_type: str, id_: str) -> str:
     """
     uri = f"spotify:{id_type}:{id_}"
     return uri
+
+
+def find_time() -> int:
+    """
+    :return int: Time to wait
+    Finds the time in seconds to wait until the next update
+    for top99 playlist
+    """
+    date = datetime.datetime.today()
+    wait_time = 6 - date.weekday()
+    if not wait_time:
+        wait_time += 7
+    d, m, y = map(int, date.strftime("%d %m %Y").split())
+
+    aim = datetime.datetime(int(y), int(m), int(d) + wait_time, 14)
+
+    total_time = (aim - date).total_seconds()
+
+    return int(total_time)
