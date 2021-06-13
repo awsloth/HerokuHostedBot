@@ -396,9 +396,13 @@ def find_time() -> int:
     for top99 playlist
     """
     date = datetime.datetime.today()
-    wait_time = 6 - date.weekday()
-    if not wait_time:
-        wait_time += 7
+    if date.weekday() == 6 and date.hour >= 14:
+        wait_time = 6 - date.weekday()
+        if not wait_time:
+            wait_time += 7
+    else:
+        wait_time = 0
+
     d, m, y = map(int, date.strftime("%d %m %Y").split())
 
     aim = datetime.datetime(int(y), int(m), int(d) + wait_time, 14)
