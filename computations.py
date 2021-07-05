@@ -389,23 +389,21 @@ def id_to_uri(id_type: str, id_: str) -> str:
     return uri
 
 
-def find_time() -> int:
+def find_time(date) -> int:
     """
     :return int: Time to wait
     Finds the time in seconds to wait until the next update
     for top99 playlist
     """
-    date = datetime.datetime.today()
     if date.weekday() == 6 and date.hour >= 14:
-        wait_time = 6 - date.weekday()
-        if not wait_time:
-            wait_time += 7
+        wait_time = 7
     else:
-        wait_time = 0
+        wait_time = 6 - date.weekday()
 
     d, m, y = map(int, date.strftime("%d %m %Y").split())
 
     aim = datetime.datetime(int(y), int(m), int(d) + wait_time, 14)
+    print(aim)
 
     total_time = (aim - date).total_seconds()
 

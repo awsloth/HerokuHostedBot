@@ -579,7 +579,7 @@ def top_playlist(user: str) -> dict:
 
     # Get all tracks
     tracks = [track['uri'] for track in sp.top_tracks("short_term", 50)['items']]
-    tracks += [track['uri'] for track in sp.top_tracks("short_term", 50, 49)['items']]
+    tracks += [track['uri'] for track in sp.top_tracks("short_term", 50, 49)['items']][1:]
 
     play_id = None
     for playlist in sp.get_users_playlists()['items']:
