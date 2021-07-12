@@ -36,7 +36,7 @@ After redirect to the localhost site copy the new url and paste here```'''
 @bot.event
 async def on_ready():
     while 1:
-        time_to_sleep = computations.find_time()
+        time_to_sleep = computations.find_time(datetime.datetime.now())
         print(time_to_sleep)
         await asyncio.sleep(time_to_sleep)
 
