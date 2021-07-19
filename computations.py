@@ -13,7 +13,8 @@ URL = os.getenv('DATABASE_URL')
 
 
 def check_user_exist(user: str) -> bool:
-    """
+    """Checks user exists
+
     :arg user: The user to check (Required)
     :return bool: Whether the user exists or not
     Checks whether any information is stored about the user in the database
@@ -73,7 +74,8 @@ def check_user(user: str, scope: str) -> bool:
     return False
 
 
-def save_user(user: str, token: str, refresh: str, time: float, scope: str) -> None:
+def save_user(user: str, token: str, refresh: str,
+              time: float, scope: str) -> None:
     """
     :arg user: The user to save details about (Required)
     :arg token: The auth token for the user (Required)
@@ -89,7 +91,8 @@ def save_user(user: str, token: str, refresh: str, time: float, scope: str) -> N
 
     # Insert a new user into the database
     statement = "INSERT INTO AuthData\nVALUES ('{}', '{}', '{}', {}, '{}');"
-    cur.execute(statement,(user, token, refresh, time, scope))
+    cur.execute(statement, (user, token,
+                refresh, time, scope))
 
     # Close the connection to the database
     # and commit changes to the database
@@ -142,7 +145,8 @@ def get_user(user: str) -> list:
     return result[1:-1]
 
 
-def update_user(user: str, token: str, refresh: str, time: float, scope: str) -> None:
+def update_user(user: str, token: str, refresh: str,
+                time: float, scope: str) -> None:
     """
     :arg user: The user to update details about (Required)
     :arg token: The auth token for the user (Required)
@@ -157,7 +161,10 @@ def update_user(user: str, token: str, refresh: str, time: float, scope: str) ->
     cur = con.cursor()
 
     # Update the database where the id matches that of the user
-    statement = "UPDATE AuthData\nSET authtoken = '{}',refreshtoken = '{}',time={},scope = '{}'\nWHERE personid = '{}';"
+    statement = "UPDATE AuthData\n"\
+                "SET authtoken = '{}', refreshtoken = '{}',"\
+                " time={}, scope = '{}'\n"\
+                "WHERE personid = '{}';"
     cur.execute(statement, (token, refresh, time, scope, user,))
 
     # Close the connection to the database
@@ -207,7 +214,7 @@ def change_opt(user: str, opt: bool) -> None:
     cur.close()
     con.commit()
     con.close()
-    
+
 
 async def show_overlap(*users) -> dict:
     """
@@ -240,7 +247,8 @@ async def show_overlap(*users) -> dict:
     return overlap
 
 
-async def playlist_overlap(user: str, accuracy: str, *playlist_ids: str) -> dict:
+async def playlist_overlap(user: str, accuracy: str,
+                           *playlist_ids: str) -> dict:
     """
     :arg user: The user to authenticate (Required)
     :arg accuracy: The type of intersection to find (Required)
@@ -250,16 +258,19 @@ async def playlist_overlap(user: str, accuracy: str, *playlist_ids: str) -> dict
     """
     tracks = []
     for playlist_id in playlist_ids:
-        playlist_songs = await spotifyauth.get_playlist_songs(user, playlist_id, False)
+        playlist_songs = await spotifyauth.get_playlist_songs(user,
+                                                              playlist_id,
+                                                              False)
         if playlist_songs['Error'] != 0:
             return {'info': [], 'Error': playlist_songs['Error']}
         tracks.append(playlist_songs['info'])
 
     user_songs = []
     for play_tracks in tracks:
-        track_ids = [x['track']['id'] for x in play_tracks if not x['track']['is_local']]
-        track_dict = [[x['track']['name'], x['track']['artists'][0]['name']] for x in play_tracks
-                      if not x['track']['is_local']]
+        track_ids = [x['track']['id']
+                     for x in play_tracks if not x['track']['is_local']]
+        track_dict = [[x['track']['name'], x['track']['artists'][0]['name']]
+                      for x in play_tracks if not x['track']['is_local']]
         songs = dict(zip(track_ids, track_dict))
         user_songs.append(songs)
 
@@ -313,13 +324,16 @@ def ordered_songs(song_list: list) -> dict:
     song_counts = collections.Counter(songs)
 
     num_cutoff = max(len(song_list)/2, 2)
-    filtered_songs = [[song_counts[song], song] for song in song_counts.keys() if song_counts[song] >= num_cutoff]
+    filtered_songs = [[song_counts[song], song]
+                      for song in song_counts.keys()
+                      if song_counts[song] >= num_cutoff]
 
     song_dict = {}
     for sub_dict in song_list:
         song_dict.update(sub_dict)
 
-    song_info = sorted([[song_count, song_dict[song], song] for song_count, song in filtered_songs],
+    song_info = sorted([[song_count, song_dict[song], song]
+                        for song_count, song in filtered_songs],
                        key=lambda x: x[0], reverse=True)
 
     return {"info": {"songs": song_info}, "Error": 0}

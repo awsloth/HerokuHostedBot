@@ -80,7 +80,9 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     if artist is not None:
         found = False
         for result in results:
-            name = [letter for letter in result['result']['primary_artist']['name'].lower() if ord(letter) != 8203]
+            name = [letter for letter in
+                    result['result']['primary_artist']['name'].lower()
+                    if ord(letter) != 8203]
             if artist.lower() in ''.join(name):
                 lyrics_url = result['result']['url']
                 found = True
@@ -110,7 +112,9 @@ def get_lyrics(search_term: str, artist: str = None) -> dict:
     else:
         # Find the lyrics div
         lines = []
-        divs = soup.find_all("div", {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"})
+        divs = soup.find_all("div",
+                             {"class": "Lyrics__Container-sc-1ynbvzw-6 krDVEH"}
+                             )
         for div in divs:
             tag_text = []
             for child in div.children:

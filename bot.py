@@ -46,8 +46,10 @@ async def on_ready():
 
 
 # Function for dealing with reactions
-async def auth_scope(ctx: discord.ext.commands.Context, command: str, req_scope: list) -> bool:
-    """
+async def auth_scope(ctx: discord.ext.commands.Context,
+                     command: str, req_scope: list) -> bool:
+    """Works with reactions to get input
+
     :arg ctx: discord context class for current event
     :arg command: The command being verified
     :arg req_scope: The scope required for the command
@@ -72,10 +74,10 @@ async def auth_scope(ctx: discord.ext.commands.Context, command: str, req_scope:
 
     # Wait for the user to complete the actions needed
     try:
-        reaction, user = await bot.wait_for('reaction_add',
-                                            timeout=120.0, check=check)
+        reaction, _ = await bot.wait_for('reaction_add',
+                                         timeout=120.0, check=check)
     except asyncio.TimeoutError:
-        await ctx.send(f"Timed out")
+        await ctx.send("Timed out")
         return False
 
     # If the user used thumbs up accept they agreed else not agreed
@@ -94,7 +96,8 @@ async def send_as_message(place, info_list, pattern):
     :arg pattern: The pattern of how the message is formed
     Sends the info as a message
     """
-    messages = computations.form_message([pattern.format(*items) for items in info_list])
+    entries = [pattern.format(*items) for items in info_list]
+    messages = computations.form_message(entries)
 
     for message in messages:
         await place.send(message)
@@ -186,10 +189,12 @@ class AccountCommands(commands.Cog):
             time_left = time.time()
 
             # Save details to database
-            computations.save_user(ctx.author.id, access_token, refresh_token, time_left, scope)
+            computations.save_user(ctx.author.id, access_token,
+                                   refresh_token, time_left, scope)
 
             # Tell the user the authorisation process is complete
-            await ctx.author.send("Successfully set up spotify account for use")
+            await ctx.author.send("Successfully set up spotify"
+                                  " account for use")
 
         else:
             # Tell the user the account is already set up
@@ -221,10 +226,11 @@ class SpotifyAPI(commands.Cog):
                     To compare @ the user or use their discord id (Required)
         """
         if output not in ["chat", "queue", "playlist"]:
-            await ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
+            await ctx.send(f"{output} not a valid output type,"
+                           " try chat, queue or playlist")
             return -1
         # Get the overlap of the users songs
-        user_ids = list(map(lambda x: [x.id, x.name] if not isinstance(x, str) else x, users))
+        user_ids = [x if isinstance(x, str) else [x.id, x.name] for x in users]
 
         # TODO improve speeds of this request
         info = await computations.show_overlap(*user_ids)
@@ -243,14 +249,15 @@ class SpotifyAPI(commands.Cog):
         # Send the songs by the method specified by the user
         if output.lower() == "chat":
             # Show the user the overlap and songs
-            await ctx.send(f"You have a {overlap_percentage}% overlap, or {overlap} songs")
+            await ctx.send(f"You have a {overlap_percentage}%"
+                           f" overlap, or {overlap} songs")
 
             await send_as_message(ctx, track_info, "{} by {}")
 
         elif output.lower() == "queue":
             # add tracks to queue
-            result = spotifyauth.add_to_queue(str(ctx.author.id),
-                                              [track[1] for track in info['info']['songs']])
+            tracks = [track[1] for track in info['info']['songs']]
+            result = spotifyauth.add_to_queue(str(ctx.author.id), tracks)
 
             # If an error occurred adding to queue, send the error
             if result['Error'] != 0:
@@ -262,8 +269,9 @@ class SpotifyAPI(commands.Cog):
 
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
+            tracks = [track[1] for track in info['info']['songs']]
             result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 [track[1] for track in info['info']['songs']], 'userOverlapPlaylist')
+                                                 tracks, 'userOverlapPlaylist')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:
@@ -286,16 +294,20 @@ class SpotifyAPI(commands.Cog):
         :arg playlists: The links for the playlists
         """
         if accuracy not in ['exact', 'rough']:
-            await ctx.send(f"accuracy {accuracy} not valid try 'exact' or 'rough'")
+            await ctx.send(f"accuracy {accuracy} not"
+                           " valid try 'exact' or 'rough'")
             return -1
 
         if output not in ["chat", "queue", "playlist"]:
-            await ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
+            await ctx.send(f"{output} not a valid output type,"
+                           " try chat, queue or playlist")
             return -1
 
-        playlists = [computations.uri_to_id(computations.link_to_uri(playlist)) for playlist in playlists]
+        playlists = [computations.uri_to_id(computations.link_to_uri(playlist))
+                     for playlist in playlists]
 
-        info = await computations.playlist_overlap(str(ctx.author.id), accuracy, *playlists)
+        info = await computations.playlist_overlap(str(ctx.author.id),
+                                                   accuracy, *playlists)
 
         if info['Error'] != 0:
             await ctx.send(info['Error'])
@@ -310,14 +322,15 @@ class SpotifyAPI(commands.Cog):
         # Send the songs by the method specified by the user
         if output.lower() == "chat":
             if accuracy == "rough":
-                await send_as_message(ctx, track_info, "{} by {} with {} matches")
+                await send_as_message(ctx, track_info,
+                                      "{} by {} with {} matches")
             else:
                 await send_as_message(ctx, track_info, "{} by {}")
 
         elif output.lower() == "queue":
             # add tracks to queue
-            result = spotifyauth.add_to_queue(str(ctx.author.id),
-                                              [track[2] for track in info['info']['songs']])
+            tracks = [track[2] for track in info['info']['songs']]
+            result = spotifyauth.add_to_queue(str(ctx.author.id), tracks)
 
             # If an error occurred adding to queue, send the error
             if result['Error'] != 0:
@@ -329,8 +342,9 @@ class SpotifyAPI(commands.Cog):
 
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
-            result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 [track[2] for track in info['info']['songs']], 'playlistOverlapSongs')
+            tracks = [track[2] for track in info['info']['songs']]
+            result = spotifyauth.create_playlist(str(ctx.author.id), tracks,
+                                                 'playlistOverlapSongs')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:
@@ -362,7 +376,8 @@ class SpotifyAPI(commands.Cog):
             year = today.year
             month = today.month
             day = today.day
-            time_secs = datetime.datetime(year, month, day, hours, minutes, seconds).timestamp()
+            time_secs = datetime.datetime(year, month, day,
+                                          hours, minutes, seconds).timestamp()
             total_time_secs = time_secs-today.timestamp()
             if total_time_secs < 0:
                 total_time_secs += 86400
@@ -394,7 +409,8 @@ class SpotifyAPI(commands.Cog):
         :arg source: A playlist link or a list of song/artist links (max 5)
         """
         if output not in ["chat", "queue", "playlist"]:
-            await ctx.send(f"{output} not a valid output type, try chat, queue or playlist")
+            await ctx.send(f"{output} not a valid output type,"
+                           " try chat, queue or playlist")
             return -1
 
         # Convert the links to uris
@@ -410,12 +426,14 @@ class SpotifyAPI(commands.Cog):
             return -1
 
         # Grab the track info from the returned data
-        track_info = [[tracks['name'], tracks['artists'][0]['name']] for tracks in recs['info']['tracks']]
+        track_info = [[tracks['name'], tracks['artists'][0]['name']]
+                      for tracks in recs['info']['tracks']]
 
         # Send the songs by the method specified by the user
         if output.lower() == "dm":
             # Form inline code message to show song names and artists
-            messages = computations.form_message([f"{name} by {artist}" for name, artist in track_info])
+            entries = [f"{name} by {artist}" for name, artist in track_info]
+            messages = computations.form_message(entries)
 
             # Send each specified message
             for message in messages:
@@ -437,7 +455,8 @@ class SpotifyAPI(commands.Cog):
         elif output.lower() == "playlist":
             # Create/add to a playlist with recommended tracks
             result = spotifyauth.create_playlist(str(ctx.author.id),
-                                                 recs['info']['tracks'], 'discordRecs')
+                                                 recs['info']['tracks'],
+                                                 'discordRecs')
 
             # If an error occurred creating a playlist, send the error
             if result['Error'] != 0:
@@ -450,11 +469,13 @@ class SpotifyAPI(commands.Cog):
     @commands.command(name='artists')
     async def artists(self, ctx, playlist: str):
         """
-        Displays the number or artists and top 10 artists and their percentage playlist
+        Displays the number or artists and top 10 artists and
+        their percentage playlist
         :arg playlist: A playlist link, id or uri
         """
         # Get the artist's info
-        artists = await spotifyauth.get_artists(str(ctx.author.id), computations.link_to_uri(playlist))
+        play_uri = computations.link_to_uri(playlist)
+        artists = await spotifyauth.get_artists(str(ctx.author.id), play_uri)
 
         # If there was an error send the error to thw user
         if artists['Error'] != 0:
@@ -462,11 +483,14 @@ class SpotifyAPI(commands.Cog):
             return -1
 
         # Get the artists info as a string
-        artists_info = [f"{i+1}. {artist_info[0]} with {artist_info[1]}%" for i,
-                        artist_info in enumerate(artists['info']['artists'])]
+        artists_info = [f"{i+1}. {artist_info[0]} with {artist_info[1]}%"
+                        for i, artist_info in
+                        enumerate(artists['info']['artists'])]
 
         # Form inline code message to show artist names and percentages
-        messages = computations.form_message(artists_info+[f"Total artists: {artists['info']['Total']}"])
+        messages = computations.form_message(artists_info +
+                                             ["Total artists:"
+                                              f" {artists['info']['Total']}"])
 
         # Send each message
         for message in messages:
@@ -485,7 +509,8 @@ class SpotifyAPI(commands.Cog):
         # show an error and stop the command
         time_range = time_range.lower()
         if time_range not in options:
-            await ctx.send(f"{time_range} not available, user 'long', 'medium' or 'short'")
+            await ctx.send(f"{time_range} not available,"
+                           " user 'long', 'medium' or 'short'")
             return -1
 
         # Get the top ten songs for the specified range
@@ -498,10 +523,13 @@ class SpotifyAPI(commands.Cog):
 
         # Get the song details
         songs = songs['info']
-        song_details = [[i, track['name'], track['artists'][0]['name']] for i, track in enumerate(songs)]
+        song_details = [[i, track['name'], track['artists'][0]['name']]
+                        for i, track in enumerate(songs)]
 
         # Form inline code message to show song names and artists
-        messages = computations.form_message([f"{i+1}. {name} by {artist}" for i, name, artist in song_details])
+        messages = computations.form_message([f"{i+1}. {name} by {artist}"
+                                              for i, name, artist
+                                              in song_details])
 
         # Send each message
         for message in messages:
@@ -520,7 +548,8 @@ class SpotifyAPI(commands.Cog):
         # show an error and stop the command
         time_range = time_range.lower()
         if time_range not in options:
-            await ctx.send(f"{time_range} not available, user 'long', 'medium' or 'short'")
+            await ctx.send(f"{time_range} not available,"
+                           " user 'long', 'medium' or 'short'")
             return -1
 
         # Get the songs in the specified range
@@ -539,7 +568,8 @@ class SpotifyAPI(commands.Cog):
                 artists.append(artist['id'])
 
         # Get the genres for all the ids
-        genres = await spotifyauth.genres(str(ctx.author.id), list(set(artists)))
+        genres = await spotifyauth.genres(str(ctx.author.id),
+                                          list(set(artists)))
 
         if genres['Error'] != 0:
             await ctx.send(genres['Error'])

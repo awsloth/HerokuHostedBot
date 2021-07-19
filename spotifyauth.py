@@ -88,8 +88,8 @@ async def get_user_songs(user: str) -> dict:
 
     if computations.check_user(user, scope):
         return {"info": [],
-                "Error": f'''```User has wrong scope
-re-authenticate using the `+setup all` command please```'''}
+                "Error": "```User has wrong scope\n"
+                         "re-authenticate using the `+setup all` command please```"}
 
     # Get the auth code
     code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
@@ -283,8 +283,9 @@ def create_playlist(user: str, tracks: list, name: str) -> dict:
     """
     scope = "playlist-modify-public"
     if computations.check_user(user, scope):
-        return {"info": [], "Error": "Error, user not authenticated for request, use command `+setup all`"}
-    
+        return {"info": [], "Error": "Error, user not authenticated"
+                                     "for request, use command `+setup all`"}
+
     # Get the auth code
     code = spotifyapi.init(redirect_uri, user, scope=scope, save_func=computations.save_user,
                            read_func=computations.get_user, update_func=computations.update_user,
@@ -406,8 +407,8 @@ async def get_playlist_songs(user: str, playlist_id: str, private: bool, sp: spo
 
         if computations.check_user(user, scope):
             return {"info": [],
-                    "Error": f'''```User has wrong scope
-    re-authenticate using the `+setup all` command please```'''}
+                    "Error": "'''```User has wrong scope\n"
+                             "re-authenticate using the `+setup all` command please```"}
 
         # Get the auth code
         if scope != "":
@@ -464,8 +465,8 @@ async def get_artists(user: str, playlist: str) -> dict:
     # If the user isn't in the database send an error
     if not computations.check_user_exist(user):
         return {"info": [],
-                "Error": f'''```User doesn't exist
-    authenticate using the `+setup all` command please```'''}
+                "Error": "'''```User doesn't exist\n"
+                         "authenticate using the `+setup all` command please```"}
 
     playlist_id = computations.uri_to_id(playlist)
 
@@ -496,8 +497,8 @@ def cur_song(user: str) -> dict:
     # If the user isn't in the database send an error
     if not computations.check_user_exist(user):
         return {"info": [],
-                "Error": f'''```User doesn't exist
-    authenticate using the `+setup all` command please```'''}
+                "Error": "```User doesn't exist"
+                         "authenticate using the `+setup all` command please```"}
 
     # Get the auth code
     code = spotifyapi.init(redirect_uri, user, save_func=computations.save_user,
