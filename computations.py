@@ -25,7 +25,7 @@ def check_user_exist(user: str) -> bool:
 
     # Get all personid-s in the database where the
     # id is the same as that of the user
-    statement = "SELECT personid FROM AuthData\nWHERE personid = '{}';"
+    statement = "SELECT personid FROM AuthData\nWHERE personid = %s;"
 
     cur.execute(statement, (user,))
 
@@ -52,7 +52,8 @@ def check_user(user: str, scope: str) -> bool:
     cur = con.cursor()
 
     # Get all scope where the personid matches that of the user
-    statement = "SELECT scope FROM AuthData\nWHERE personid = '{}';"
+    statement = "SELECT scope FROM AuthData\nWHERE personid = %s;"
+
     cur.execute(statement, (user,))
 
     # Get the results
@@ -90,7 +91,7 @@ def save_user(user: str, token: str, refresh: str,
     cur = con.cursor()
 
     # Insert a new user into the database
-    statement = "INSERT INTO AuthData\nVALUES ('{}', '{}', '{}', {}, '{}');"
+    statement = "INSERT INTO AuthData\nVALUES (%s, %s, %s, %s, %s);"
     cur.execute(statement, (user, token,
                 refresh, time, scope))
 
@@ -112,7 +113,7 @@ def delete_user(user: str) -> None:
     cur = con.cursor()
 
     # Delete from the database where the id matches that of the user
-    statement = "DELETE FROM AuthData WHERE personid = '{}';"
+    statement = "DELETE FROM AuthData WHERE personid = %s;"
     cur.execute(statement, (user,))
 
     # Close the connection to the database
@@ -133,7 +134,7 @@ def get_user(user: str) -> list:
     cur = con.cursor()
 
     # Get all the information about the user where the id matches
-    statement = "SELECT * FROM AuthData\nWHERE personid = '{}';"
+    statement = "SELECT * FROM AuthData\nWHERE personid = %s;"
     cur.execute(statement, (user,))
 
     # Get the results
@@ -162,9 +163,9 @@ def update_user(user: str, token: str, refresh: str,
 
     # Update the database where the id matches that of the user
     statement = "UPDATE AuthData\n"\
-                "SET authtoken = '{}', refreshtoken = '{}',"\
-                " time={}, scope = '{}'\n"\
-                "WHERE personid = '{}';"
+                "SET authtoken = %s, refreshtoken = %s,"\
+                "time = %s, scope = %s\n"\
+                "WHERE personid = %s;"
     cur.execute(statement, (token, refresh, time, scope, user,))
 
     # Close the connection to the database
@@ -207,7 +208,7 @@ def change_opt(user: str, opt: bool) -> None:
     cur = con.cursor()
 
     # Get all the information about the user where the id matches
-    statement = "UPDATE AuthData\nSET OptIn = {}\nWHERE PersonId = '{}';"
+    statement = "UPDATE AuthData\nSET OptIn = %s\nWHERE PersonId = %s;"
     cur.execute(statement, (opt, user,))
 
     # Close the connection to the database
@@ -414,9 +415,7 @@ def find_time(date) -> int:
     else:
         wait_time = 6 - date.weekday()
 
-    d, m, y = map(int, date.strftime("%d %m %Y").split())
-
-    aim = datetime.datetime(int(y), int(m), int(d) + wait_time, 14)
+    aim = date + datetime.timedelta(days=wait_time)
     print(aim)
 
     total_time = (aim - date).total_seconds()
